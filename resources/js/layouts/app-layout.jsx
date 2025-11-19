@@ -47,6 +47,11 @@ export default function AppLayout({ children }) {
                     url: route("home"),
                     icon: Icon.IconHome,
                 },
+                {
+                    title: "Seminar Saya",
+                    url: route("seminar"),
+                    icon: Icon.IconAward,
+                },
             ],
         },
         {
