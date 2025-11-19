@@ -1,0 +1,23 @@
+{
+  "name": "itdel-service-users",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "db:sync": "ts-node scripts/sync.ts",
+    "db:backup": "ts-node scripts/backup.ts",
+    "db:migrate": "ts-node scripts/migrate.ts",
+    "db:seed": "ts-node scripts/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "moment": "^2.30.1",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7",
+    "ts-node": "^10.9.2"
+  }
+}
