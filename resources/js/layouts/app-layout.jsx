@@ -1,3 +1,5 @@
+// resources/js/layouts/app-layout.jsx
+
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +29,7 @@ import { route } from "ziggy-js";
 export default function AppLayout({ children }) {
     const { auth, appName, pageName } = usePage().props;
     const { theme, colorTheme, toggleTheme, setColorTheme } = useTheme();
+
     const colorThemes = [
         "blue",
         "green",
@@ -48,9 +51,24 @@ export default function AppLayout({ children }) {
                     icon: Icon.IconHome,
                 },
                 {
-                    title: "Seminar Saya",
-                    url: route("seminar"),
-                    icon: Icon.IconAward,
+                    title: "Todo",
+                    url: route("todo"),
+                    icon: Icon.IconChecklist,
+                },
+            ],
+        },
+        {
+            title: "Penghargaan",
+            items: [
+                {
+                    title: "Statistik",
+                    url: route("penghargaan.statistik"),
+                    icon: Icon.IconChartBar,
+                },
+                {
+                    title: "Daftar Pengajuan",
+                    url: route("penghargaan.daftar"),
+                    icon: Icon.IconListDetails,
                 },
             ],
         },
