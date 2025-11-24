@@ -61,14 +61,9 @@ export default function AppLayout({ children }) {
             title: "Penghargaan",
             items: [
                 {
-                    title: "Statistik",
-                    url: route("penghargaan.statistik"),
-                    icon: Icon.IconChartBar,
-                },
-                {
-                    title: "Daftar Pengajuan",
-                    url: route("penghargaan.daftar"),
-                    icon: Icon.IconListDetails,
+                    title: "Seminar",
+                    url: route("penghargaan.seminar.daftar"),
+                    icon: Icon.IconPresentation,
                 },
             ],
         },

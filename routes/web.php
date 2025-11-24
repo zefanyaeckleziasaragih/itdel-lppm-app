@@ -65,17 +65,28 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         });
 
         // =======================
-        // PENGHARGAAN
+        // PENGHARGAAN SEMINAR
         // =======================
         Route::prefix('penghargaan')->group(function () {
 
-            // LPPM - Statistik
+            // Daftar Seminar yang sudah diajukan
+            Route::get('/seminar/daftar', [PengajuanController::class, 'daftarSeminar'])
+                ->name('penghargaan.seminar.daftar');
+
+            // Pilih Prosiding (Step 1)
+            Route::get('/seminar/pilih', [PengajuanController::class, 'pilihProsiding'])
+                ->name('penghargaan.seminar.pilih');
+
+            // Form Pengajuan Seminar (Step 2)
+            Route::get('/seminar', [PengajuanController::class, 'index'])
+                ->name('penghargaan.seminar');
+            
+            Route::post('/seminar', [PengajuanController::class, 'storeSeminar'])
+                ->name('penghargaan.seminar.store');
+
+            // Redirect dari statistik (tidak digunakan)
             Route::get('/statistik', [StatistikController::class, 'index'])
                 ->name('penghargaan.statistik');
-
-            // LPPM - Daftar dosen pengajuan penghargaan
-            Route::get('/daftar', [PengajuanController::class, 'index'])
-                ->name('penghargaan.daftar');
         });
     });
 });
