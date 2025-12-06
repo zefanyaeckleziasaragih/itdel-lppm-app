@@ -1,0 +1,25 @@
+[33m8745be14[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan[m[33m)[m Merge branch 'dev-IFS23008' into dev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan
+[33m21a2d47a[m[33m ([m[1;31morigin/dev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan[m[33m)[m feat: add new roles (LPPM, Dosen, HRD) to ConstHelper
+[33ma2e57332[m[33m ([m[1;31morigin/dev-IFS23008[m[33m, [m[1;32mdev-IFS23008[m[33m)[m update
+[33mecd3464e[m feat(penghargaan): integrasi HRD, seminar, dan jurnal dosen
+[33mc6f06178[m chore: regenerate package-lock after merge
+[33mce3b355d[m Merge remote-tracking branch 'origin/dev-ifs23045' into dev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan
+[33m46577d09[m Merge branch 'test-ifs23050' into dev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan
+[33me2cf4f51[m Merge branch 'dev-ifs23053' into dev-ifs23024-statistik-dan-daftar-pengajuan-penghargaan
+[33m5d98fdce[m[33m ([m[1;31morigin/dev-ifs23045[m[33m)[m update  pengajuan penghargaan jurnal dosen
+[33mf6846fed[m nothing change
+[33m118c448d[m[33m ([m[1;31morigin/test-ifs23050[m[33m, [m[1;32mtest-ifs23050[m[33m)[m init
+[33mf01adb42[m[33m ([m[1;31morigin/dev-ifs23053[m[33m, [m[1;32mdev-ifs23053[m[33m)[m add detail penghargaan:hrd
+[33md9318c7d[m feat : statistik dan daftar pengajua penghargaan
+[33m7ab72a94[m add
+[33m8b8e1bae[m feat: implement Pengajuan Penghargaan Jurnal UI with updated routes, controller logic, and view pages
+[33m3f4f0a26[m main
+[33m9e2aca38[m add daftar penghargaan
+[33m1096b0ed[m main
+[33m4e79141d[m comit todo
+[33ma6deb394[m[33m ([m[1;31morigin/test-ifs23024[m[33m, [m[1;31morigin/dev-ifs23024[m[33m, [m[1;32mtest-ifs23024[m[33m, [m[1;32mdev-ifs23024[m[33m)[m init
+[33m125ffc0d[m[33m ([m[1;31morigin/test-ifs23046[m[33m, [m[1;31morigin/test-ifs23021[m[33m, [m[1;31morigin/test-ifs23020[m[33m, [m[1;31morigin/test-ifs23006[m[33m, [m[1;31morigin/ifs23050[m[33m, [m[1;31morigin/dev-ifs23046[m[33m, [m[1;32mifs23050[m[33m)[m Merge pull request #2 from auxtern/ifs18005-test
+[33mf51da2fd[m[33m ([m[1;31morigin/ifs18005-test[m[33m)[m fix: Perbaikan file testing
+[33mfb3de2a3[m Merge pull request #1 from auxtern/ifs18005-test
+[33mc54a6763[m change: Merubah teknologi ke Laravel Inertia
+[33m2aa43639[m Initial commit

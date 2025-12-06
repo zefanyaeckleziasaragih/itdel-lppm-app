@@ -1,10 +1,41 @@
 # ITDel Starter APP
 
-## Logs
+Aplikasi starter untuk kebutuhan pengembangan internal IT Del berbasis **Laravel + Inertia + React** dengan standar kualitas kode dan testing yang terstruktur.
 
-### [16-11-2025]
+---
 
--   [Abdullah Ubaid] Inisialisasi proyek
+## 📌 Logs
+
+### [1-12-2025] 
+- [Glen Rejeki Sitorus] Memeperbaiki tampilan sidebar untuk dosen 
+- [Glen Rejeki Sitorus] Memeperbaiki tampilan sidebar untuk Admin 
+
+### [28-11-2025] 
+- [Glen Rejeki Sitorus] Memperbaiki tampilan sidebar untuk menu LPPM dan HRD
+- [Glen Rejeki Sitorus] Memperbaiki masalah dashboard HRD yang tidak muncul setelah update sebelumnya
+- [Glen Rejeki Sitorus] Menyempurnakan tampilan dashboard LPPM
+- [Glen Rejeki Sitorus] Memperbarui deskripsi pada README sesuai perubahan terbaru
+
+### [27-11-2025]
+- [Glen Rejeki Sitorus] memperbaiki code dimana tampilan dashboard hrd dari yosep kemarin tidak muncul dan memperbaiki tampilan dashboard lppm
+  
+  
+### [26-11-2025]
+- [Glen Rejeki Sitorus] add LPPM and HRD as allowed editors in hak akses
+
+
+
+### [25-11-2025]
+- [Glen Rejeki Sitorus] Menggabungkan tampilan HRD, pengajuan penghargaan seminar (Zefanya), dan pengajuan penghargaan jurnal (Lofelyn)
+- Sinkronisasi route, sidebar, controller, dan konfigurasi Ziggy
+- Penyelesaian konflik pada beberapa file utama
+
+
+### [24-11-2025]
+- [Glen Rejeki Sitorus] Membuat tampilan statistik/beranda dan daftar dosen yang mengajukan penghargaan seminar dan dosen
+
+### [21-11-2025]
+- [Lofelyn Enzely Ambarita] Menambahkan tampilan pengajuan penghargaan jurnal
 
 ## Quality Checks
 

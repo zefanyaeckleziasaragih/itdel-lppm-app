@@ -8,20 +8,34 @@ import { Ziggy } from "./ziggy.js";
 
 createInertiaApp({
     resolve: (name) => {
-        const pages = import.meta.glob("./pages/**/*.jsx", { eager: true });
-        return pages[`./pages/${name}.jsx`];
+        // Load semua file page di dua folder:
+        const pages = import.meta.glob(
+            [
+                "./pages/**/*.jsx",      // folder default
+                "./pages/app/**/*.jsx",  // folder app yang kamu pakai
+            ],
+            { eager: true }
+        );
+
+        // Pencarian dengan prioritas folder `app/`
+        return (
+            pages[`./pages/app/${name}.jsx`] ??
+            pages[`./pages/${name}.jsx`] ??
+            null
+        );
     },
+
     setup({ el, App, props }) {
-        // Inject Ziggy routes ke props
-        if (props.initialPage.props.ziggy) {
+        // Ziggy injected (tidak wajib tapi tetap aman)
+        if (props.initialPage.props?.ziggy) {
             props.initialPage.props.ziggy = {
                 ...Ziggy,
-                location: new URL(Ziggy.url).href, // Convert to string
+                location: new URL(Ziggy.url).href,
             };
         }
 
         createRoot(el).render(
-            <ThemeProvider>
+            <ThemeProvider defaultTheme="light">
                 <App {...props} />
             </ThemeProvider>
         );

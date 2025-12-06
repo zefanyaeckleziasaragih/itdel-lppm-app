@@ -88,24 +88,16 @@ export default function DaftarSeminarPage() {
         <AppLayout>
             <div className="flex flex-col gap-4">
                 {/* HEADER + FILTER BAR */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
+                    {/* Left side: Search controls */}
+                    <div className="flex items-center gap-3 flex-1">
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Type to search"
                             className="max-w-md"
                         />
-                        <Button
-                            onClick={() =>
-                                router.visit(route("penghargaan.seminar.pilih"))
-                            }
-                        >
-                            Tambahkan
-                        </Button>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
                         <Button variant="outline">Search</Button>
 
                         {/* Search by */}
@@ -142,6 +134,15 @@ export default function DaftarSeminarPage() {
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Right side: Tambahkan button */}
+                    <Button
+                        onClick={() =>
+                            router.visit(route("penghargaan.seminar.pilih"))
+                        }
+                    >
+                        Tambahkan
+                    </Button>
                 </div>
 
                 {/* LIST CARD SEMINAR */}

@@ -16,15 +16,16 @@ class HakAksesController extends Controller
     {
         $auth = $request->attributes->get('auth');
         $isEditor = $this->checkIsEditor($auth);
-        if (!$isEditor) {
+
+        if (! $isEditor) {
             return redirect()->route('home');
         }
 
         return Inertia::render('app/hak-akses/hak-akses-page', [
-            // SELALU diperlukan, tapi LAZY loading
             'aksesList' => function () {
                 $aksesList = HakAksesModel::all();
 
+                // Ambil data user dari API berdasarkan user_id di tabel hak_akses
                 $response = UserApi::postReqUsersByIds(
                     ToolsHelper::getAuthToken(),
                     $aksesList->pluck('user_id')->unique()->toArray(),
@@ -32,56 +33,79 @@ class HakAksesController extends Controller
 
                 $usersList = [];
                 if ($response && isset($response->data->users)) {
-                    $usersList = collect($response->data->users)->map(function ($user) {
-                        return (object) $user;
-                    })->all();
+                    $usersList = collect($response->data->users)
+                        ->map(function ($user) {
+                            return (object) $user;
+                        })
+                        ->all();
                 }
 
+                // buat mapping urutan role berdasarkan PRIORITAS
+                // contoh: Admin, HRD, Ketua LPPM, Anggota LPPM, Dosen, Todo
+                $rolesOrder = array_flip(ConstHelper::OPTION_ROLES);
+
                 foreach ($aksesList as $akses) {
+                    // attach object user ke setiap row
                     $akses->user = collect($usersList)->firstWhere('id', $akses->user_id);
-                    $data_akses = explode(',', $akses->akses);
-                    sort($data_akses);
+
+                    // pecah string akses -> array
+                    $data_akses = $akses->akses
+                        ? explode(',', $akses->akses)
+                        : [];
+
+                    // urutkan $data_akses berdasarkan urutan di ConstHelper::OPTION_ROLES
+                    usort($data_akses, function ($a, $b) use ($rolesOrder) {
+                        $wa = $rolesOrder[$a] ?? PHP_INT_MAX;
+                        $wb = $rolesOrder[$b] ?? PHP_INT_MAX;
+
+                        return $wa <=> $wb;
+                    });
+
                     $akses->data_akses = $data_akses;
                 }
 
-                return $aksesList->sortBy(function ($item) {
-                    $user = $item->user;
+                // urutkan list berdasarkan nama user (ASC)
+                return $aksesList
+                    ->sortBy(function ($item) {
+                        $user = $item->user;
 
-                    return $user ? strtolower($user->name) : '';
-                })->values();
+                        return $user ? strtolower($user->name) : '';
+                    })
+                    ->values();
             },
-            // SELALU diperlukan dan SELALU dikirim
+
             'pageName' => Inertia::always('Hak Akses'),
-            'auth' => Inertia::always($auth),
+            'auth'     => Inertia::always($auth),
             'isEditor' => Inertia::always(
-                in_array('Admin', $auth->akses) || in_array('Admin', $auth->roles) ? true : false
+                in_array('Admin', $auth->akses) || in_array('Admin', $auth->roles)
             ),
+            // checkbox di dialog Hak Akses ikut urutan PRIORITAS dari ConstHelper
             'optionRoles' => Inertia::always(ConstHelper::getOptionRoles()),
         ]);
     }
 
     public function postChange(Request $request)
     {
-        // Cek izin
         $auth = $request->attributes->get('auth');
         $isEditor = $this->checkIsEditor($auth);
-        if (!$isEditor) {
+
+        if (! $isEditor) {
             return back()->with('error', 'Anda tidak memiliki izin untuk mengubah hak akses.');
         }
 
         $request->validate([
-            'userId' => 'required',
+            'userId'   => 'required',
             'hakAkses' => 'required|array',
         ]);
 
         // Hapus akses lama
         HakAksesModel::where('user_id', $request->userId)->delete();
 
-        // Simpan hak akses baru
+        // Simpan hak akses baru (disimpan sebagai string "Role1,Role2,...")
         HakAksesModel::create([
-            'id' => ToolsHelper::generateId(),
+            'id'      => ToolsHelper::generateId(),
             'user_id' => $request->userId,
-            'akses' => implode(',', $request->hakAkses),
+            'akses'   => implode(',', $request->hakAkses),
         ]);
 
         return back()->with('success', 'Hak akses berhasil diperbarui.');
@@ -89,11 +113,10 @@ class HakAksesController extends Controller
 
     public function postDelete(Request $request)
     {
-        // Cek izin
         $auth = $request->attributes->get('auth');
         $isEditor = $this->checkIsEditor($auth);
 
-        if (!$isEditor) {
+        if (! $isEditor) {
             return back()->with('error', 'Anda tidak memiliki izin untuk mengubah hak akses.');
         }
 
@@ -109,10 +132,10 @@ class HakAksesController extends Controller
 
     public function postDeleteSelected(Request $request)
     {
-        // Cek izin
         $auth = $request->attributes->get('auth');
         $isEditor = $this->checkIsEditor($auth);
-        if (!$isEditor) {
+
+        if (! $isEditor) {
             return back()->with('error', 'Anda tidak memiliki izin untuk mengubah hak akses.');
         }
 
@@ -126,11 +149,13 @@ class HakAksesController extends Controller
         return back()->with('success', 'Hak akses untuk pengguna yang dipilih berhasil dihapus.');
     }
 
-    private function checkIsEditor($auth)
+    private function checkIsEditor($auth): bool
     {
         if (ToolsHelper::checkRoles('Admin', $auth->akses)) {
             return true;
-        } elseif (ToolsHelper::checkRoles('Admin', $auth->roles)) {
+        }
+
+        if (ToolsHelper::checkRoles('Admin', $auth->roles)) {
             return true;
         }
 

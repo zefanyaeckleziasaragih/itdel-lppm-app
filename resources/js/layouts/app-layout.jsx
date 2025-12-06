@@ -1,5 +1,3 @@
-// resources/js/layouts/app-layout.jsx
-
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +39,21 @@ export default function AppLayout({ children }) {
         "yellow",
     ];
 
-    const navData = [
+    // =========================
+    // ROLE HANDLING
+    // =========================
+    const roles = auth?.akses ?? [];
+
+    const isAdmin = roles.includes("Admin");
+    const isHRD = roles.includes("HRD");
+    const isLPPM =
+        roles.includes("Ketua LPPM") || roles.includes("Anggota LPPM");
+    const isDosen = roles.includes("Dosen");
+
+    // =========================
+    // NAV DEFAULT (FALLBACK)
+    // =========================
+    let navData = [
         {
             title: "Main",
             items: [
@@ -57,9 +69,26 @@ export default function AppLayout({ children }) {
                 },
             ],
         },
+
+        // ⭐ PENGHARGAAN
         {
             title: "Penghargaan",
             items: [
+                {
+                    title: "Beranda HRD",
+                    url: route("penghargaan.dashboard-hrd"),
+                    icon: Icon.IconLayoutDashboard,
+                },
+                {
+                    title: "Beranda LPPM",
+                    url: route("penghargaan.statistik"),
+                    icon: Icon.IconChartBar,
+                },
+                {
+                    title: "Daftar Pengajuan",
+                    url: route("penghargaan.daftar"),
+                    icon: Icon.IconListDetails,
+                },
                 {
                     title: "Seminar",
                     url: route("penghargaan.seminar.daftar"),
@@ -67,6 +96,20 @@ export default function AppLayout({ children }) {
                 },
             ],
         },
+
+        // ⭐ PENGAJUAN JURNAL
+        {
+            title: "Pengajuan Jurnal",
+            items: [
+                {
+                    title: "Daftar Jurnal",
+                    url: route("pengajuan.jurnal.daftar"),
+                    icon: Icon.IconBook,
+                },
+            ],
+        },
+
+        // ⭐ ADMIN
         {
             title: "Admin",
             items: [
@@ -75,9 +118,199 @@ export default function AppLayout({ children }) {
                     url: route("hak-akses"),
                     icon: Icon.IconLock,
                 },
+                {
+                    title: "Daftar Penghargaan",
+                    url: route("daftar-penghargaan"),
+                    icon: Icon.IconAward,
+                },
             ],
         },
     ];
+
+    // =========================
+    // ROLE SPESIFIK
+    // =========================
+
+    // 0. ADMIN -> Beranda Admin + Bagian Dosen/LPPM/HRD (dropdown) + Admin: Hak Akses
+    if (isAdmin) {
+        navData = [
+            {
+                title: "Menu Utama",
+                items: [
+                    {
+                        title: "Beranda Admin",
+                        url: route("home"), // ganti ke route dashboard admin kalau ada
+                        icon: Icon.IconLayoutDashboard,
+                    },
+                    {
+                        title: "Bagian Dosen",
+                        icon: Icon.IconBook,
+                        items: [
+                            {
+                                title: "Beranda Dosen",
+                                // route ke halaman yang mewakili beranda dosen
+                                url: route("home"),
+                                icon: Icon.IconHome,
+                            },
+                            {
+                                title: "Seminar",
+                                url: route("penghargaan.seminar.daftar"),
+                                icon: Icon.IconPresentation,
+                            },
+                            {
+                                title: "Jurnal", // rename dari "Daftar Jurnal"
+                                url: route("pengajuan.jurnal.daftar"),
+                                icon: Icon.IconBook,
+                            },
+                        ],
+                    },
+                    {
+                        title: "Bagian LPPM",
+                        icon: Icon.IconChartBar,
+                        items: [
+                            {
+                                title: "Beranda LPPM",
+                                url: route("penghargaan.statistik"),
+                                icon: Icon.IconChartBar,
+                            },
+                            {
+                                title: "Daftar Pengajuan",
+                                url: route("penghargaan.daftar"),
+                                icon: Icon.IconListDetails,
+                            },
+                        ],
+                    },
+                    {
+                        title: "Bagian HRD",
+                        icon: Icon.IconAward,
+                        items: [
+                            {
+                                title: "Beranda HRD",
+                                url: route("penghargaan.dashboard-hrd"),
+                                icon: Icon.IconLayoutDashboard,
+                            },
+                            {
+                                title: "Daftar Penghargaan",
+                                url: route("daftar-penghargaan"),
+                                icon: Icon.IconAward,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                title: "Admin",
+                items: [
+                    {
+                        title: "Hak Akses",
+                        url: route("hak-akses"),
+                        icon: Icon.IconLock,
+                    },
+                ],
+            },
+        ];
+    }
+    // 1. HRD
+    else if (isHRD) {
+        navData = [
+            {
+                title: "Penghargaan",
+                items: [
+                    {
+                        title: "Beranda HRD",
+                        url: route("penghargaan.dashboard-hrd"),
+                        icon: Icon.IconLayoutDashboard,
+                    },
+                    {
+                        title: "Daftar Penghargaan",
+                        url: route("daftar-penghargaan"),
+                        icon: Icon.IconAward,
+                    },
+                ],
+            },
+            {
+                title: "Admin",
+                items: [
+                    {
+                        title: "Hak Akses",
+                        url: route("hak-akses"),
+                        icon: Icon.IconLock,
+                    },
+                ],
+            },
+        ];
+    }
+    // 2. LPPM
+    else if (isLPPM) {
+        navData = [
+            {
+                title: "LPPM",
+                items: [
+                    {
+                        title: "Beranda LPPM",
+                        url: route("penghargaan.statistik"),
+                        icon: Icon.IconChartBar,
+                    },
+                    {
+                        title: "Daftar Pengajuan",
+                        url: route("penghargaan.daftar"),
+                        icon: Icon.IconListDetails,
+                    },
+                ],
+            },
+            {
+                title: "Admin",
+                items: [
+                    {
+                        title: "Hak Akses",
+                        url: route("hak-akses"),
+                        icon: Icon.IconLock,
+                    },
+                ],
+            },
+        ];
+    }
+    // 3. DOSEN (sudah pas, tetap)
+    else if (isDosen) {
+        navData = [
+            {
+                title: "Main",
+                items: [
+                    {
+                        title: "Beranda",
+                        url: route("home"),
+                        icon: Icon.IconHome,
+                    },
+                    {
+                        title: "Pengajuan Penghargaan",
+                        icon: Icon.IconAward,
+                        items: [
+                            {
+                                title: "Seminar",
+                                url: route("penghargaan.seminar.daftar"),
+                                icon: Icon.IconPresentation,
+                            },
+                            {
+                                title: "Jurnal",
+                                url: route("pengajuan.jurnal.daftar"),
+                                icon: Icon.IconBook,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                title: "Admin",
+                items: [
+                    {
+                        title: "Hak Akses",
+                        url: route("hak-akses"),
+                        icon: Icon.IconLock,
+                    },
+                ],
+            },
+        ];
+    }
 
     return (
         <>
@@ -94,64 +327,65 @@ export default function AppLayout({ children }) {
                     appName={appName}
                     variant="inset"
                 />
-                <SidebarInset>
-                    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-                        <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-                            <SidebarTrigger className="-ml-1" />
-                            <Separator
-                                orientation="vertical"
-                                className="mx-2 data-[orientation=vertical]:h-4"
-                            />
-                            <h1 className="text-base font-medium">
-                                {pageName}
-                            </h1>
-                            <div className="ml-auto flex items-center gap-2">
-                                <Select
-                                    className="capitalize"
-                                    value={colorTheme}
-                                    onValueChange={setColorTheme}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Tema" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Tema</SelectLabel>
-                                            {colorThemes.map((item) => (
-                                                <SelectItem
-                                                    key={`theme-${item}`}
-                                                    value={item}
-                                                >
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
 
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={toggleTheme}
-                                >
-                                    {theme === "light" ? (
-                                        <Sun className="h-4 w-4" />
-                                    ) : (
-                                        <Moon className="h-4 w-4" />
-                                    )}
-                                </Button>
-                            </div>
+                <SidebarInset>
+                    <header className="flex h-[var(--header-height)] items-center gap-4 border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 px-4 lg:px-6">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="h-6" />
+
+                        <h1 className="text-lg font-semibold tracking-tight">
+                            {pageName}
+                        </h1>
+
+                        <div className="ml-auto flex items-center gap-2">
+                            <Select
+                                className="capitalize"
+                                value={colorTheme}
+                                onValueChange={setColorTheme}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Tema" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Tema</SelectLabel>
+                                        {colorThemes.map((item) => (
+                                            <SelectItem
+                                                key={item}
+                                                value={item}
+                                            >
+                                                {item}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={toggleTheme}
+                            >
+                                {theme === "light" ? (
+                                    <Sun className="h-4 w-4" />
+                                ) : (
+                                    <Moon className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Toggle theme</span>
+                            </Button>
                         </div>
                     </header>
+
                     <div className="flex flex-1 flex-col">
                         <div className="@container/main flex flex-1 flex-col gap-2">
-                            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 md:px-6">
+                            <div className="flex flex-col gap-4 py-4 px-4 md:px-6 md:py-6">
                                 {children}
                             </div>
                         </div>
                     </div>
                 </SidebarInset>
             </SidebarProvider>
+
             <Toaster richColors position="top-center" />
         </>
     );

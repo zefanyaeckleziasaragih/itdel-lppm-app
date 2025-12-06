@@ -8,12 +8,15 @@ use Symfony\Component\HttpFoundation\Request;
 
 class PengajuanController extends Controller
 {
-// Halaman daftar seminar yang sudah diajukan
+    // ===============================
+    // DARI test-ifs23050
+    // ===============================
+
+    // Halaman daftar seminar yang sudah diajukan
     public function daftarSeminar(Request $request)
     {
         $auth = $request->attributes->get('auth');
 
-        // Data seminar yang sudah diajukan (dummy)
         $seminarList = [
             [
                 'id' => 1,
@@ -46,18 +49,17 @@ class PengajuanController extends Controller
         ];
 
         return Inertia::render('app/penghargaan/daftar-seminar-page', [
-            'auth' => Inertia::always($auth),
-            'pageName' => Inertia::always('Daftar Seminar'),
+            'auth'        => Inertia::always($auth),
+            'pageName'    => Inertia::always('Daftar Seminar'),
             'seminarList' => $seminarList,
         ]);
     }
 
-    // Halaman pilih prosiding (halaman pertama)
+    // Halaman pilih prosiding
     public function pilihProsiding(Request $request)
     {
         $auth = $request->attributes->get('auth');
 
-        // Data prosiding seminar dummy
         $prosidingList = [
             [
                 'id' => 1,
@@ -80,20 +82,18 @@ class PengajuanController extends Controller
         ];
 
         return Inertia::render('app/penghargaan/pilih-prosiding-page', [
-            'auth' => Inertia::always($auth),
-            'pageName' => Inertia::always('Pilih Prosiding'),
-            'prosidingList' => $prosidingList,
+            'auth'         => Inertia::always($auth),
+            'pageName'     => Inertia::always('Pilih Prosiding'),
+            'prosidingList'=> $prosidingList,
         ]);
     }
 
-    // Halaman form pengajuan (halaman kedua)
-    public function index(Request $request)
+    // Form pengajuan seminar (dari prosiding)
+    public function formSeminar(Request $request)
     {
         $auth = $request->attributes->get('auth');
-
         $prosidingId = $request->query('prosiding_id');
-        
-        // Data prosiding lengkap
+
         $allProsiding = [
             1 => [
                 'id' => 1,
@@ -133,27 +133,125 @@ class PengajuanController extends Controller
             ],
         ];
 
-        $selectedProsiding = isset($allProsiding[$prosidingId]) ? $allProsiding[$prosidingId] : null;
+        $selectedProsiding = isset($allProsiding[$prosidingId])
+            ? $allProsiding[$prosidingId]
+            : null;
 
         return Inertia::render('app/penghargaan/pengajuan-seminar-page', [
-            'auth' => Inertia::always($auth),
-            'pageName' => Inertia::always('Pengajuan Penghargaan Seminar'),
-            'selectedProsiding' => $selectedProsiding,
+            'auth'             => Inertia::always($auth),
+            'pageName'         => Inertia::always('Pengajuan Penghargaan Seminar'),
+            'selectedProsiding'=> $selectedProsiding,
         ]);
     }
 
     public function storeSeminar(Request $request)
     {
-        $auth = $request->attributes->get('auth');
-
         $request->validate([
             'prosiding_id' => 'required|integer',
         ]);
 
-        // Di sini seharusnya menyimpan ke database
-        // Untuk sementara hanya return success
-
-        return redirect()->route('penghargaan.seminar.daftar')->with('success', 'Pengajuan seminar berhasil diajukan!');
+        return redirect()
+            ->route('penghargaan.seminar.daftar')
+            ->with('success', 'Pengajuan seminar berhasil diajukan!');
     }
-    
+
+    // ===============================
+    // Daftar pengajuan penghargaan
+    // ===============================
+    public function index(Request $request)
+    {
+        $auth = $request->attributes->get('auth');
+
+        // Sementara pakai dummy data
+        $pengajuan = [
+            [
+                'id'       => 1,
+                'judul'    => 'Jurnal Dosen 1',
+                'jenis'    => 'Jurnal',
+                'penulis'  => 'Dosen 1, Dosen 2',
+                'status'   => 'Belum disetujui',
+                'tanggal'  => '2025-05-10',
+                'kampus'   => 'IT Del',
+                'fakultas' => 'Fakultas Informatika dan Teknik Elektro',
+                'prodi'    => 'Informatika',
+            ],
+            [
+                'id'       => 2,
+                'judul'    => 'Seminar Dosen 3',
+                'jenis'    => 'Seminar Nasional',
+                'penulis'  => 'Lola Simanjuntak',
+                'status'   => 'Belum disetujui',
+                'tanggal'  => '2025-06-01',
+                'kampus'   => 'IT Del',
+                'fakultas' => 'Fakultas Teknik Industri',
+                'prodi'    => 'Teknik Industri',
+            ],
+        ];
+
+        return Inertia::render('app/penghargaan/daftar-pengajuan-page', [
+            'auth'      => Inertia::always($auth),
+            'pageName'  => Inertia::always('Daftar Pengajuan Penghargaan'),
+            'pengajuan' => $pengajuan,
+        ]);
+    }
+
+    // Detail pengajuan
+    public function show(Request $request, $id)
+    {
+        $auth = $request->attributes->get('auth');
+
+        if ((int) $id === 1) {
+            $pengajuan = [
+                'id'                => 1,
+                'nama_dosen'        => 'Dosen 1, Dosen 2',
+                'nip'               => '1987654321',
+                'nik'               => '12710511010001',
+                'jenis_penghargaan' => 'Publikasi Jurnal',
+                'nama_kegiatan'     => 'Penerapan Machine Learning untuk Prediksi Cuaca',
+                'indeks'            => 'Scopus Q2 – Journal of Computer Science',
+                'dana_maksimum'     => 10000000,
+                'status'            => 'Belum disetujui',
+                'bukti_url'         => '#',
+                'dana_disetujui'    => null,
+            ];
+
+            return Inertia::render('app/penghargaan/detail-pengajuan-jurnal-page', [
+                'auth'      => Inertia::always($auth),
+                'pageName'  => Inertia::always('Form Konfirmasi Jurnal'),
+                'pengajuan' => $pengajuan,
+            ]);
+        }
+
+        $pengajuan = [
+            'id'                => (int) $id,
+            'nama_dosen'        => 'Lola Simanjuntak',
+            'nip'               => '1987654321',
+            'nik'               => '12710511010001',
+            'jenis_penghargaan' => 'Seminar Nasional',
+            'nama_kegiatan'     => 'Implementasi AI untuk Pendidikan',
+            'indeks'            => 'Scopus – Elsevier Procedia Computer Science',
+            'dana_maksimum'     => 7500000,
+            'status'            => 'Belum disetujui',
+            'bukti_url'         => '#',
+            'dana_disetujui'    => null,
+        ];
+
+        return Inertia::render('app/penghargaan/detail-pengajuan-seminar-page', [
+            'auth'      => Inertia::always($auth),
+            'pageName'  => Inertia::always('Form Konfirmasi Seminar'),
+            'pengajuan' => $pengajuan,
+        ]);
+    }
+
+    public function konfirmasi(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status'         => 'required|string|in:Setuju,Menolak,Belum disetujui',
+            'dana_disetujui' => 'required|numeric|min:0',
+        ]);
+
+        return redirect()
+            ->route('penghargaan.daftar')
+            ->with('success', 'Data konfirmasi berhasil disimpan.');
+    }
 }

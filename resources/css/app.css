@@ -130,3 +130,45 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Container untuk pencarian dan dropdown */
+.select-container {
+    display: flex;
+    justify-content: flex-start; /* Menyusun elemen secara horizontal */
+    align-items: center;
+    gap: 15px; /* Jarak antar elemen */
+    margin-top: 20px; /* Pastikan ada spasi atas */
+    margin-bottom: 20px; /* Spasi bawah */
+    flex-wrap: wrap; /* Membuat elemen pindah baris pada layar kecil */
+}
+
+/* CSS untuk input search */
+.search-bar {
+    display: block; /* Pastikan tampil */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    width: 250px;
+}
+
+/* Dropdown style untuk Search by dan Sort by */
+.select-dropdown {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    width: 180px;
+}
+
+/* Untuk tampilan responsif */
+@media (max-width: 768px) {
+    .select-container {
+        flex-direction: column; /* Menyusun elemen secara vertikal pada layar kecil */
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .search-bar, .select-dropdown {
+        width: 100%; /* Membuat elemen lebih lebar pada layar kecil */
+    }
+}

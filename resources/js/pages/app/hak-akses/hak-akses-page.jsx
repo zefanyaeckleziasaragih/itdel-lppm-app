@@ -128,7 +128,7 @@ export default function HakAksesPage() {
             enableSorting: false,
             enableHiding: false,
         },
-        //  Kolom Identitas
+        // Kolom Identitas
         {
             id: "Identitas",
             accessorKey: "user",
@@ -284,7 +284,6 @@ export default function HakAksesPage() {
             <Card className="h-full">
                 <CardHeader>
                     <CardTitle className="flex items-center">
-                        {/* Judul */}
                         <div className="flex-1">
                             <div className="flex items-center">
                                 <Icon.IconLock className="inline mr-2" />

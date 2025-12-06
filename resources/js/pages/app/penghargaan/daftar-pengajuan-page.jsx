@@ -1,6 +1,9 @@
+// resources/js/pages/app/penghargaan/daftar-pengajuan-page.jsx
+
 import AppLayout from "@/layouts/app-layout";
-import { usePage } from "@inertiajs/react";
-import { useMemo, useState } from "react";
+import { Link, usePage } from "@inertiajs/react";
+import { useEffect, useMemo, useState } from "react";
+import { route } from "ziggy-js";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -12,20 +15,30 @@ import {
 } from "@/components/ui/select";
 
 import * as Icon from "@tabler/icons-react";
+import { toast } from "sonner";
 
 const SEARCH_BY_DEFAULT = "judul";
 const SORT_BY_DEFAULT = "tanggal-desc";
 
 export default function DaftarPengajuanPage() {
-    const { pengajuan } = usePage().props;
+    const { pengajuan, flash } = usePage().props;
 
     const [search, setSearch] = useState("");
     const [searchBy, setSearchBy] = useState(SEARCH_BY_DEFAULT);
     const [sortBy, setSortBy] = useState(SORT_BY_DEFAULT);
 
+    // === TAMPILKAN POPUP KETIKA ADA flash.success ===
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+    }, [flash?.success]);
+
     const data = useMemo(() => {
+        const list = Array.isArray(pengajuan) ? pengajuan : [];
+
         // 1. Filter
-        let filtered = pengajuan.filter((item) => {
+        let filtered = list.filter((item) => {
             if (!search) return true;
 
             const term = search.toLowerCase();
@@ -67,7 +80,8 @@ export default function DaftarPengajuanPage() {
     const statusClass = (status) => {
         if (!status) return "text-muted-foreground";
         const lower = status.toLowerCase();
-        if (lower.includes("disetujui")) return "text-green-500";
+        if (lower.includes("disetujui") || lower.includes("setuju"))
+            return "text-green-500";
         if (lower.includes("menolak") || lower.includes("ditolak"))
             return "text-red-500";
         return "text-muted-foreground";
@@ -134,9 +148,10 @@ export default function DaftarPengajuanPage() {
                 {/* LIST CARD PENGAJUAN */}
                 <div className="flex flex-col gap-3">
                     {data.map((item) => (
-                        <div
+                        <Link
                             key={item.id}
-                            className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
+                            href={route("penghargaan.detail", item.id)}
+                            className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm hover:bg-accent transition"
                         >
                             {/* Left: icon + judul + penulis */}
                             <div className="flex items-center gap-3">
@@ -166,7 +181,7 @@ export default function DaftarPengajuanPage() {
                                     {item.prodi}
                                 </span>
                             </div>
-                        </div>
+                        </Link>
                     ))}
 
                     {data.length === 0 && (

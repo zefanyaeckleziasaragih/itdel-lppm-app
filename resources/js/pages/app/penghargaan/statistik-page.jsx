@@ -110,10 +110,7 @@ const PRODI_OPTIONS = [
 ];
 
 export default function StatistikPage() {
-    // dari controller, minimal kita butuh props: statistik
-    // struktur item statistik:
-    // { bulan, jurnal, seminar, buku, fakultas, prodi }
-    const { statistik } = usePage().props;
+    const { statistik, summary } = usePage().props;
 
     const [filterFakultas, setFilterFakultas] = useState(FILTER_ALL);
     const [filterProdi, setFilterProdi] = useState(FILTER_ALL);
@@ -146,9 +143,43 @@ export default function StatistikPage() {
         }));
     }, [statistik, filterFakultas, filterProdi]);
 
+    const formatRupiah = (angka) =>
+        new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            maximumFractionDigits: 0,
+        }).format(angka ?? 0);
+
+    const approvalRate = summary?.approvalRateBulanIni ?? 0;
+    const totalPengajuanBulanIni = summary?.totalPengajuanBulanIni ?? 0;
+
+    const rekapJenis = summary?.rekapJenisBulanIni ?? {};
+    const jurnalBlnIni = rekapJenis.jurnal ?? 0;
+    const seminarBlnIni = rekapJenis.seminar ?? 0;
+    const bukuBlnIni = rekapJenis.buku ?? 0;
+
     return (
         <AppLayout>
             <div className="flex flex-col gap-4">
+                {/* BAR KECIL: total pengajuan & approval rate */}
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <span>
+                        Total pengajuan bulan ini:{" "}
+                        <span className="font-semibold">
+                            {totalPengajuanBulanIni}
+                        </span>
+                    </span>
+                    <span>
+                        Approval rate bulan ini:{" "}
+                        <span className="font-semibold">
+                            {approvalRate.toFixed
+                                ? approvalRate.toFixed(1)
+                                : approvalRate}
+                            %
+                        </span>
+                    </span>
+                </div>
+
                 {/* FILTER BAR */}
                 <div className="flex flex-wrap gap-3">
                     {/* Fakultas */}
@@ -186,48 +217,106 @@ export default function StatistikPage() {
                     </Select>
                 </div>
 
-                {/* KARTU STATISTIK */}
-                <Card className="mt-2">
-                    <CardHeader>
-                        <CardTitle>Statistik Penghargaan</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="bulan" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                {/* Biru: Jurnal */}
-                                <Line
-                                    type="monotone"
-                                    dataKey="jurnal"
-                                    name="Jurnal"
-                                    stroke="#3b82f6" // tailwind blue-500
-                                    strokeWidth={2}
-                                    activeDot={{ r: 5 }}
-                                />
-                                {/* Merah: Seminar */}
-                                <Line
-                                    type="monotone"
-                                    dataKey="seminar"
-                                    name="Seminar"
-                                    stroke="#ef4444" // tailwind red-500
-                                    strokeWidth={2}
-                                />
-                                {/* Kuning: Buku */}
-                                <Line
-                                    type="monotone"
-                                    dataKey="buku"
-                                    name="Buku"
-                                    stroke="#eab308" // tailwind yellow-500
-                                    strokeWidth={2}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                {/* STATISTIK + PANEL TOTAL BULAN INI */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                    <Card className="mt-2">
+                        <CardHeader>
+                            <CardTitle>Statistik Penghargaan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[320px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="bulan" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    {/* Biru: Jurnal */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey="jurnal"
+                                        name="Jurnal"
+                                        stroke="#3b82f6"
+                                        strokeWidth={2}
+                                        activeDot={{ r: 5 }}
+                                    />
+                                    {/* Merah: Seminar */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey="seminar"
+                                        name="Seminar"
+                                        stroke="#ef4444"
+                                        strokeWidth={2}
+                                    />
+                                    {/* Kuning: Buku */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey="buku"
+                                        name="Buku"
+                                        stroke="#eab308"
+                                        strokeWidth={2}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    <div className="flex flex-col gap-3">
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Total Penghargaan Bulan Ini
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-3xl font-semibold">
+                                    {summary?.totalBulanIni ?? 0}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Total Dana Approve
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-lg font-semibold">
+                                    {formatRupiah(
+                                        summary?.totalDanaApprove ?? 0
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Sisa Dana
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-lg font-semibold">
+                                    {formatRupiah(summary?.sisaDana ?? 0)}
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    dari anggaran{" "}
+                                    {formatRupiah(summary?.anggaran ?? 0)}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* RINCIAN KECIL DI BAWAH GRAFIK */}
+                <div className="text-xs text-muted-foreground">
+                    Rincian bulan ini (semua fakultas & prodi):{" "}
+                    <span className="font-medium">
+                        Jurnal {jurnalBlnIni}, Seminar {seminarBlnIni}, Buku{" "}
+                        {bukuBlnIni}
+                    </span>
+                </div>
             </div>
         </AppLayout>
     );

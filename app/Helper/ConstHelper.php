@@ -5,33 +5,38 @@ namespace App\Helper;
 class ConstHelper
 {
     /**
-     * Daftar role yang tersedia dalam sistem
+     * Daftar role yang tersedia dalam sistem dalam urutan prioritas.
+     *
+     * Urutan ini dipakai:
+     * - untuk menampilkan checkbox di halaman Hak Akses
+     * - untuk mengurutkan badge Hak Akses (Admin, HRD, LPPM, dst)
      *
      * @var array<int, string>
      */
     const OPTION_ROLES = [
         'Admin',
+        'HRD',
+        'Ketua LPPM',
+        'Anggota LPPM',
+        'Dosen',
         'Todo',
     ];
 
     /**
-     * Mendapatkan daftar role yang tersedia dalam urutan terurut
+     * Mengembalikan daftar role sesuai urutan prioritas di atas.
      *
-     * @return array<int, string> Daftar role yang sudah diurutkan secara ascending
-     *
-     * @example
-     * $roles = ConstHelper::getOptionRoles();
-     * // Returns: ['Admin', 'Todo']
-     *
-     * @uses self::OPTION_ROLES
+     * @return array<int, string>
      */
-    public static function getOptionRoles()
+    public static function getOptionRoles(): array
     {
-        $roles = self::OPTION_ROLES;
-        sort($roles);
-
-        return $roles;
+        // TIDAK disort lagi, langsung pakai urutan di OPTION_ROLES
+        return self::OPTION_ROLES;
     }
 
+    /**
+     * Opsi jumlah baris per halaman (misalnya untuk pagination tabel)
+     *
+     * @var array<int, int>
+     */
     const OPTION_ROWS_PER_PAGE = [3, 5, 10, 25, 50, 100];
 }
