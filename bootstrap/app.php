@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.check.auth' => \App\Http\Middleware\ApiCheckTokenMiddleware::class,
             'check.auth' => \App\Http\Middleware\CheckAuthMiddleware::class,
             'handle.inertia' => \App\Http\Middleware\HandleInertiaRequests::class,
+            'check.dosen' => \App\Http\Middleware\CheckDosenMiddleware::class, // ⭐ TAMBAHKAN INI
         ]);
 
         $middleware->trustProxies(at: '*');

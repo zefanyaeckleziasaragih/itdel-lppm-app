@@ -4,11 +4,9 @@ namespace App\Http\Controllers\App\Penghargaan;
 
 use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
-use App\Models\LPPM\DosenModel;
-use App\Models\LPPM\SeminarModel;
-use App\Models\LPPM\PenghargaanSeminarModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class SeminarController extends Controller
 {
@@ -19,32 +17,47 @@ class SeminarController extends Controller
     {
         $auth = $request->attributes->get('auth');
         
-        // Cari dosen
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        // Query dari database LPPM (gunakan DB::connection jika perlu)
+        // Cari dosen berdasarkan user_id
+        $dosen = DB::connection('pgsql_lppm')
+            ->table('m_dosen')
+            ->where('user_id', $auth->id)
+            ->first();
         
         if (!$dosen) {
-            return redirect()->route('home')->with('error', 'Data dosen tidak ditemukan');
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
         }
 
         // Ambil seminar milik dosen ini dengan penghargaan
-        $seminarList = $dosen->seminars()
-            ->with('penghargaan')
-            ->orderBy('created_at', 'desc')
+        $seminarList = DB::connection('pgsql_lppm')
+            ->table('p_seminar_user as psu')
+            ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
+            ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
+            ->where('psu.user_id', $auth->id)
+            ->select(
+                's.id',
+                's.nama_forum as judul',
+                's.website as url',
+                DB::raw("COALESCE(ps.status, 'Belum Diajukan') as status"),
+                's.created_at as tanggal_pengajuan'
+            )
+            ->orderBy('s.created_at', 'desc')
             ->get()
             ->map(function ($seminar) {
                 return [
                     'id' => $seminar->id,
-                    'judul' => $seminar->judul_makalah,
-                    'penulis' => $seminar->dosens->pluck('user_id')->join(', '),
-                    'status' => $seminar->penghargaan ? 
-                        ($seminar->penghargaan->tgl_cair ? 'Sudah Dicairkan' : 'Belum Dicairkan') 
-                        : 'Belum Diajukan',
-                    'tanggal_pengajuan' => $seminar->created_at->format('Y-m-d'),
+                    'judul' => $seminar->judul,
+                    'penulis' => 'Data Penulis', // Sesuaikan dengan kebutuhan
+                    'status' => $seminar->status === 'Sudah Dicairkan' ? 'Sudah Dicairkan' : 'Belum Dicairkan',
+                    'tanggal_pengajuan' => $seminar->tanggal_pengajuan,
                 ];
-            });
+            })
+            ->toArray();
 
         return Inertia::render('app/penghargaan/daftar-seminar-page', [
-            'auth' => $auth,
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Daftar Seminar'),
             'seminarList' => $seminarList,
         ]);
     }
@@ -56,24 +69,35 @@ class SeminarController extends Controller
     {
         $auth = $request->attributes->get('auth');
 
-        // TODO: Ganti dengan query real dari database
-        $prosidingList = [
-            [
-                'id' => 1,
-                'judul' => 'International Conference on AI 2024',
-                'sinta_id' => '123456',
-                'scopus_id' => 'SCOPUS-001',
-            ],
-            [
-                'id' => 2,
-                'judul' => 'Southeast Asian Conference on Software Engineering 2024',
-                'sinta_id' => '789012',
-                'scopus_id' => 'SCOPUS-002',
-            ],
-        ];
+        // Cari dosen
+        $dosen = DB::connection('pgsql_lppm')
+            ->table('m_dosen')
+            ->where('user_id', $auth->id)
+            ->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Ambil list seminar yang tersedia
+        $prosidingList = DB::connection('pgsql_lppm')
+            ->table('m_seminar')
+            ->select('id', 'nama_forum as judul', 'website as url')
+            ->get()
+            ->map(function($p) use ($dosen) {
+                return [
+                    'id' => $p->id,
+                    'judul' => $p->judul,
+                    'sinta_id' => $dosen->sinta_id ?? '',
+                    'scopus_id' => $dosen->scopus_id ?? '',
+                ];
+            })
+            ->toArray();
 
         return Inertia::render('app/penghargaan/pilih-prosiding-page', [
-            'auth' => $auth,
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Pilih Prosiding'),
             'prosidingList' => $prosidingList,
         ]);
     }
@@ -86,23 +110,48 @@ class SeminarController extends Controller
         $auth = $request->attributes->get('auth');
         $prosidingId = $request->query('prosiding_id');
 
-        // TODO: Query prosiding dari database
-        $selectedProsiding = [
-            'id' => $prosidingId,
-            'judul' => 'International Conference on AI 2024',
-            'sinta_id' => '123456',
-            'scopus_id' => 'SCOPUS-001',
-            'nama_forum' => 'ICAI 2024',
-            'penulis' => 'Dr. John Doe',
-            'institusi_penyelenggara' => 'IEEE',
-            'waktu_pelaksanaan' => '2024-10-15',
-            'tempat_pelaksanaan' => 'Bali',
-            'url' => 'https://icai2024.com',
-        ];
+        if (!$prosidingId) {
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Pilih prosiding terlebih dahulu');
+        }
+
+        // Cari dosen
+        $dosen = DB::connection('pgsql_lppm')
+            ->table('m_dosen')
+            ->where('user_id', $auth->id)
+            ->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Ambil data prosiding
+        $selectedProsiding = DB::connection('pgsql_lppm')
+            ->table('m_seminar')
+            ->where('id', $prosidingId)
+            ->first();
+
+        if (!$selectedProsiding) {
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Prosiding tidak ditemukan');
+        }
 
         return Inertia::render('app/penghargaan/pengajuan-seminar-page', [
-            'auth' => $auth,
-            'selectedProsiding' => $selectedProsiding,
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Pengajuan Penghargaan Seminar'),
+            'selectedProsiding' => [
+                'id' => $selectedProsiding->id,
+                'judul' => $selectedProsiding->nama_forum,
+                'sinta_id' => $dosen->sinta_id ?? '',
+                'scopus_id' => $dosen->scopus_id ?? '',
+                'nama_forum' => $selectedProsiding->nama_forum,
+                'penulis' => $auth->name,
+                'institusi_penyelenggara' => 'IT Del',
+                'waktu_pelaksanaan' => now()->format('Y-m-d'),
+                'tempat_pelaksanaan' => 'Sitoluama',
+                'url' => $selectedProsiding->website ?? '',
+            ],
         ]);
     }
 
@@ -114,36 +163,40 @@ class SeminarController extends Controller
         $auth = $request->attributes->get('auth');
         
         // Cari dosen
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        $dosen = DB::connection('pgsql_lppm')
+            ->table('m_dosen')
+            ->where('user_id', $auth->id)
+            ->first();
         
         if (!$dosen) {
-            return redirect()->route('home')->with('error', 'Data dosen tidak ditemukan');
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
         }
 
         $request->validate([
-            'prosiding_id' => 'required|integer',
+            'prosiding_id' => 'required',
         ]);
 
-        // TODO: Ambil data prosiding dari database berdasarkan prosiding_id
-        // Sementara hardcode untuk contoh
-        
-        $seminar = SeminarModel::create([
-            'id' => ToolsHelper::generateId(),
-            'judul_makalah' => 'Judul dari prosiding', // TODO: dari database
-            'nama_prosiding' => 'Nama prosiding',
-            'nama_forum' => 'Nama forum',
-            'penyelenggara' => 'Penyelenggara',
-            'lokasi' => 'Lokasi',
-            'tanggal_pelaksanaan' => now(),
-            'url' => '',
-            'tingkat' => 'Internasional',
-            'jenis' => 'Konferensi',
-        ]);
+        try {
+            // Insert ke pivot table p_seminar_user
+            $seminarUserId = ToolsHelper::generateId();
+            
+            DB::connection('pgsql_lppm')
+                ->table('p_seminar_user')
+                ->insert([
+                    'id' => $seminarUserId,
+                    'user_id' => $auth->id,
+                    'seminar_id' => $request->prosiding_id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
-        // Hubungkan dengan dosen
-        $seminar->dosens()->attach($dosen->id);
-
-        return redirect()->route('penghargaan.seminar.daftar')
-            ->with('success', 'Pengajuan seminar berhasil diajukan!');
+            return redirect()->route('penghargaan.seminar.daftar')
+                ->with('success', 'Pengajuan seminar berhasil diajukan!');
+                
+        } catch (\Exception $e) {
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Gagal mengajukan seminar: ' . $e->getMessage());
+        }
     }
 }
