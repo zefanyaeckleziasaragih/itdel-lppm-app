@@ -13,7 +13,7 @@ use App\Http\Controllers\App\Todo\TodoController;
 // PENGHARGAAN
 use App\Http\Controllers\App\Penghargaan\StatistikController;
 use App\Http\Controllers\App\Penghargaan\PengajuanController;
-use App\Http\Controllers\App\Penghargaan\DashboardHrdController; // <--- TAMBAH INI
+use App\Http\Controllers\App\Penghargaan\DashboardHrdController;
 
 // PENGAJUAN JURNAL
 use App\Http\Controllers\App\PengajuanJurnal\JurnalController;
@@ -145,34 +145,17 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         // ⭐ Pengajuan Jurnal
         // =======================
         Route::prefix('pengajuan-jurnal')->name('pengajuan.jurnal.')->group(function () {
-
-            // Halaman Daftar Jurnal
             Route::get('/', [JurnalController::class, 'index'])
                 ->name('daftar');
 
-            // Halaman Pilih Data (Gambar 1)
             Route::get('/pilih-data', [JurnalController::class, 'pilihData'])
                 ->name('pilih-data');
 
-            // Halaman Form Penghargaan (Gambar 2)
             Route::get('/form', [JurnalController::class, 'form'])
-                ->name('form');
+                ->name('form'); // Akan menerima ?jurnal_id=xxx
 
-            // Submit Form
             Route::post('/store', [JurnalController::class, 'store'])
                 ->name('store');
-
-            // Edit Jurnal (Optional)
-            Route::get('/edit/{id}', [JurnalController::class, 'edit'])
-                ->name('edit');
-
-            // Update Jurnal (Optional)
-            Route::put('/update/{id}', [JurnalController::class, 'update'])
-                ->name('update');
-
-            // Delete Jurnal (Optional)
-            Route::delete('/delete/{id}', [JurnalController::class, 'delete'])
-                ->name('delete');
         });
 
         // =======================

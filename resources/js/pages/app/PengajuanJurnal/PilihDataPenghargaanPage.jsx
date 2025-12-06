@@ -3,6 +3,7 @@ import { usePage, router } from "@inertiajs/react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -13,20 +14,19 @@ import {
 } from "@/components/ui/select";
 
 export default function PilihDataPenghargaanPage() {
-    const { sintaList, scopusList, sinta_id, scopus_id, prosiding } = usePage().props;
+    const { jurnalList, sinta_id, scopus_id } = usePage().props;
 
-    const [selectedSinta, setSelectedSinta] = useState(sinta_id || "");
-    const [selectedScopus, setSelectedScopus] = useState(scopus_id || "");
-    const [selectedJurnal, setSelectedJurnal] = useState(prosiding || "");
+    const [selectedJurnalId, setSelectedJurnalId] = useState("");
 
     const handleLanjutkan = () => {
-        const params = new URLSearchParams();
-        
-        if (selectedSinta) params.append("sinta_id", selectedSinta);
-        if (selectedScopus) params.append("scopus_id", selectedScopus);
-        if (selectedJurnal) params.append("prosiding", selectedJurnal);
+        if (!selectedJurnalId) {
+            alert("Silakan pilih jurnal terlebih dahulu");
+            return;
+        }
 
-        router.visit(route("pengajuan.jurnal.form") + "?" + params.toString());
+        router.visit(
+            route("pengajuan.jurnal.form") + `?jurnal_id=${selectedJurnalId}`
+        );
     };
 
     return (
@@ -35,7 +35,9 @@ export default function PilihDataPenghargaanPage() {
                 {/* Tombol Kembali */}
                 <Button
                     variant="outline"
-                    onClick={() => router.visit(route("pengajuan.jurnal.daftar"))}
+                    onClick={() =>
+                        router.visit(route("pengajuan.jurnal.daftar"))
+                    }
                     className="w-fit px-3 py-2 h-auto text-sm"
                 >
                     ← Kembali
@@ -46,59 +48,69 @@ export default function PilihDataPenghargaanPage() {
                     Pengajuan Penghargaan Jurnal oleh Dosen
                 </h2>
 
-                {/* Form Container - Sesuai Figma dengan batasan max-width */}
+                {/* Form Container */}
                 <div className="max-w-4xl mx-auto w-full px-4">
                     <div className="flex flex-col gap-4">
-                        {/* Row 1: Sinta ID & Scopus ID - Sejajar seperti Figma */}
+                        {/* Row 1: Sinta ID & Scopus ID */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Sinta ID */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium">Sinta ID</label>
+                                <Label>Sinta ID</Label>
                                 <Input
-                                    placeholder="Value"
-                                    value={selectedSinta}
-                                    onChange={(e) => setSelectedSinta(e.target.value)}
+                                    value={sinta_id || ""}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
-
-                            {/* Scopus ID */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium">Scopus ID</label>
+                                <Label>Scopus ID</Label>
                                 <Input
-                                    placeholder="Value"
-                                    value={selectedScopus}
-                                    onChange={(e) => setSelectedScopus(e.target.value)}
+                                    value={scopus_id || ""}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                         </div>
 
-                        {/* Row 2: Jurnal - Full width memanjang ke samping sesuai Figma */}
+                        {/* Row 2: Pilih Jurnal dari Database */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium">Jurnal</label>
+                            <Label>Pilih Jurnal Anda</Label>
                             <Select
-                                value={selectedJurnal}
-                                onValueChange={setSelectedJurnal}
+                                value={selectedJurnalId}
+                                onValueChange={setSelectedJurnalId}
                             >
                                 <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Value" />
+                                    <SelectValue placeholder="Pilih jurnal yang akan diajukan..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="jurnal1">Jurnal Internasional Q1</SelectItem>
-                                    <SelectItem value="jurnal2">Jurnal Internasional Q2</SelectItem>
-                                    <SelectItem value="jurnal3">Jurnal Internasional Q3</SelectItem>
-                                    <SelectItem value="jurnal4">Jurnal Internasional Q4</SelectItem>
-                                    <SelectItem value="jurnal5">Jurnal Nasional Terakreditasi</SelectItem>
-                                    <SelectItem value="jurnal6">Jurnal Nasional Tidak Terakreditasi</SelectItem>
+                                    {jurnalList && jurnalList.length > 0 ? (
+                                        jurnalList.map((jurnal) => (
+                                            <SelectItem
+                                                key={jurnal.id}
+                                                value={jurnal.id}
+                                            >
+                                                {jurnal.label}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="no-data" disabled>
+                                            Belum ada jurnal tersedia
+                                        </SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
+                            <p className="text-xs text-muted-foreground">
+                                * Hanya jurnal yang belum pernah diajukan untuk
+                                penghargaan
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Tombol Lanjutkan - Fixed di kanan bawah */}
+            {/* Tombol Lanjutkan */}
             <Button
                 onClick={handleLanjutkan}
+                disabled={!selectedJurnalId}
                 className="fixed bottom-6 right-6 px-8 py-5 text-base shadow-lg"
             >
                 Lanjutkan

@@ -38,7 +38,7 @@ class DashboardHrdController extends Controller
             'anggaran'               => 100000000,
         ];
 
-        return Inertia::render('app/dashboard-hrd/dashboard-hrd', [ // ⬅️ POLANYA SAMA
+        return Inertia::render('app/dashboard-hrd/dashboard-hrd', [
             'auth'      => Inertia::always($auth),
             'pageName'  => Inertia::always('Dashboard HRD'),
             'statistik' => $statistik,
@@ -46,4 +46,3 @@ class DashboardHrdController extends Controller
         ]);
     }
 }
-    

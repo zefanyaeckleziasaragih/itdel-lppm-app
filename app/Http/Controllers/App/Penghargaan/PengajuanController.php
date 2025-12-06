@@ -2,256 +2,224 @@
 
 namespace App\Http\Controllers\App\Penghargaan;
 
+use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
+use App\Models\DosenModel;
+use App\Models\SeminarModel;
+use App\Models\PenghargaanSeminarModel;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Symfony\Component\HttpFoundation\Request;
+use Illuminate\Support\Facades\DB;
 
 class PengajuanController extends Controller
 {
-    // ===============================
-    // DARI test-ifs23050
-    // ===============================
-
-    // Halaman daftar seminar yang sudah diajukan
+    /**
+     * Halaman daftar seminar yang sudah diajukan untuk penghargaan
+     */
     public function daftarSeminar(Request $request)
     {
         $auth = $request->attributes->get('auth');
+        
+        // Cari dosen berdasarkan user_id
+        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
+        }
 
-        $seminarList = [
-            [
-                'id' => 1,
-                'judul' => 'Seminar 1',
-                'penulis' => 'Penulis 1, Penulis 2',
-                'status' => 'belum dicairkan',
-                'tanggal_pengajuan' => '2025-01-15',
-            ],
-            [
-                'id' => 2,
-                'judul' => 'Seminar 2',
-                'penulis' => 'Penulis 1, Penulis 2',
-                'status' => 'belum dicairkan',
-                'tanggal_pengajuan' => '2025-01-20',
-            ],
-            [
-                'id' => 3,
-                'judul' => 'Seminar 3',
-                'penulis' => 'Penulis 1, Penulis 2',
-                'status' => 'sudah dicairkan',
-                'tanggal_pengajuan' => '2024-12-10',
-            ],
-            [
-                'id' => 4,
-                'judul' => 'Seminar 4',
-                'penulis' => 'Penulis 1, Penulis 2',
-                'status' => 'sudah dicairkan',
-                'tanggal_pengajuan' => '2024-11-25',
-            ],
-        ];
+        // Ambil seminar milik dosen ini yang sudah diajukan penghargaan
+        $seminarList = DB::table('p_seminar_user as psu')
+            ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
+            ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
+            ->where('psu.user_id', $auth->id)
+            ->select(
+                's.id',
+                's.nama_forum as judul',
+                's.website as url',
+                's.created_at as tanggal_pengajuan',
+                DB::raw("COALESCE(ps.status, 'Belum Diajukan') as status"),
+                DB::raw("CASE 
+                    WHEN ps.tgl_cair IS NOT NULL THEN 'Sudah Dicairkan'
+                    WHEN ps.tgl_approve_hrd IS NOT NULL THEN 'Disetujui HRD'
+                    WHEN ps.tgl_verifikasi_lppm IS NOT NULL THEN 'Diverifikasi LPPM'
+                    WHEN ps.id IS NOT NULL THEN 'Menunggu Verifikasi'
+                    ELSE 'Belum Diajukan'
+                END as status_display")
+            )
+            ->orderBy('s.created_at', 'desc')
+            ->get()
+            ->map(function ($seminar) use ($auth) {
+                return [
+                    'id' => $seminar->id,
+                    'judul' => $seminar->judul,
+                    'penulis' => $auth->name, // Nama dosen sebagai penulis
+                    'status' => $seminar->status_display,
+                    'tanggal_pengajuan' => $seminar->tanggal_pengajuan,
+                ];
+            })
+            ->toArray();
 
         return Inertia::render('app/penghargaan/daftar-seminar-page', [
-            'auth'        => Inertia::always($auth),
-            'pageName'    => Inertia::always('Daftar Seminar'),
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Daftar Seminar'),
             'seminarList' => $seminarList,
         ]);
     }
 
-    // Halaman pilih prosiding
+    /**
+     * Halaman pilih seminar dari database (bukan prosiding)
+     */
     public function pilihProsiding(Request $request)
     {
         $auth = $request->attributes->get('auth');
 
-        $prosidingList = [
-            [
-                'id' => 1,
-                'judul' => 'International Conference on Artificial Intelligence and Machine Learning 2024',
-                'sinta_id' => '123456',
-                'scopus_id' => 'SCOPUS-2024-001',
-            ],
-            [
-                'id' => 2,
-                'judul' => 'Southeast Asian Conference on Software Engineering 2024',
-                'sinta_id' => '789012',
-                'scopus_id' => 'SCOPUS-2024-002',
-            ],
-            [
-                'id' => 3,
-                'judul' => 'International Symposium on Database Systems 2025',
-                'sinta_id' => '345678',
-                'scopus_id' => 'SCOPUS-2025-003',
-            ],
-        ];
+        // Cari dosen
+        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Ambil seminar milik dosen yang BELUM diajukan penghargaan
+        $prosidingList = DB::table('p_seminar_user as psu')
+            ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
+            ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
+            ->where('psu.user_id', $auth->id)
+            ->whereNull('ps.id') // Hanya yang belum ada di tabel penghargaan
+            ->select(
+                's.id',
+                's.nama_forum as judul',
+                's.website',
+                's.biaya'
+            )
+            ->get()
+            ->map(function($seminar) use ($dosen) {
+                return [
+                    'id' => $seminar->id,
+                    'judul' => $seminar->judul,
+                    'sinta_id' => $dosen->sinta_id ?? '',
+                    'scopus_id' => $dosen->scopus_id ?? '',
+                    'website' => $seminar->website ?? '',
+                ];
+            })
+            ->toArray();
 
         return Inertia::render('app/penghargaan/pilih-prosiding-page', [
-            'auth'         => Inertia::always($auth),
-            'pageName'     => Inertia::always('Pilih Prosiding'),
-            'prosidingList'=> $prosidingList,
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Pilih Seminar'),
+            'prosidingList' => $prosidingList,
         ]);
     }
 
-    // Form pengajuan seminar (dari prosiding)
+    /**
+     * Form pengajuan penghargaan seminar (auto-fill dari database)
+     */
     public function formSeminar(Request $request)
     {
         $auth = $request->attributes->get('auth');
         $prosidingId = $request->query('prosiding_id');
 
-        $allProsiding = [
-            1 => [
-                'id' => 1,
-                'judul' => 'International Conference on Artificial Intelligence and Machine Learning 2024',
-                'sinta_id' => '123456',
-                'scopus_id' => 'SCOPUS-2024-001',
-                'nama_forum' => 'ICAIML 2024',
-                'penulis' => 'Dr. John Doe, Dr. Jane Smith',
-                'institusi_penyelenggara' => 'IEEE Computer Society',
-                'waktu_pelaksanaan' => '2024-10-15',
-                'tempat_pelaksanaan' => 'Bali International Convention Center',
-                'url' => 'https://icaiml2024.com',
-            ],
-            2 => [
-                'id' => 2,
-                'judul' => 'Southeast Asian Conference on Software Engineering 2024',
-                'sinta_id' => '789012',
-                'scopus_id' => 'SCOPUS-2024-002',
-                'nama_forum' => 'SEACSE 2024',
-                'penulis' => 'Dr. Ahmad Rahman, Prof. Sarah Lee',
-                'institusi_penyelenggara' => 'University of Singapore',
-                'waktu_pelaksanaan' => '2024-11-20',
-                'tempat_pelaksanaan' => 'Singapore Convention Center',
-                'url' => 'https://seacse2024.sg',
-            ],
-            3 => [
-                'id' => 3,
-                'judul' => 'International Symposium on Database Systems 2025',
-                'sinta_id' => '345678',
-                'scopus_id' => 'SCOPUS-2025-003',
-                'nama_forum' => 'ISDS 2025',
-                'penulis' => 'Dr. Michael Chen, Dr. Lisa Wang',
-                'institusi_penyelenggara' => 'ACM SIGMOD',
-                'waktu_pelaksanaan' => '2025-03-10',
-                'tempat_pelaksanaan' => 'Jakarta Convention Center',
-                'url' => 'https://isds2025.org',
-            ],
-        ];
-
-        $selectedProsiding = isset($allProsiding[$prosidingId])
-            ? $allProsiding[$prosidingId]
-            : null;
-
-        return Inertia::render('app/penghargaan/pengajuan-seminar-page', [
-            'auth'             => Inertia::always($auth),
-            'pageName'         => Inertia::always('Pengajuan Penghargaan Seminar'),
-            'selectedProsiding'=> $selectedProsiding,
-        ]);
-    }
-
-    public function storeSeminar(Request $request)
-    {
-        $request->validate([
-            'prosiding_id' => 'required|integer',
-        ]);
-
-        return redirect()
-            ->route('penghargaan.seminar.daftar')
-            ->with('success', 'Pengajuan seminar berhasil diajukan!');
-    }
-
-    // ===============================
-    // Daftar pengajuan penghargaan
-    // ===============================
-    public function index(Request $request)
-    {
-        $auth = $request->attributes->get('auth');
-
-        // Sementara pakai dummy data
-        $pengajuan = [
-            [
-                'id'       => 1,
-                'judul'    => 'Jurnal Dosen 1',
-                'jenis'    => 'Jurnal',
-                'penulis'  => 'Dosen 1, Dosen 2',
-                'status'   => 'Belum disetujui',
-                'tanggal'  => '2025-05-10',
-                'kampus'   => 'IT Del',
-                'fakultas' => 'Fakultas Informatika dan Teknik Elektro',
-                'prodi'    => 'Informatika',
-            ],
-            [
-                'id'       => 2,
-                'judul'    => 'Seminar Dosen 3',
-                'jenis'    => 'Seminar Nasional',
-                'penulis'  => 'Lola Simanjuntak',
-                'status'   => 'Belum disetujui',
-                'tanggal'  => '2025-06-01',
-                'kampus'   => 'IT Del',
-                'fakultas' => 'Fakultas Teknik Industri',
-                'prodi'    => 'Teknik Industri',
-            ],
-        ];
-
-        return Inertia::render('app/penghargaan/daftar-pengajuan-page', [
-            'auth'      => Inertia::always($auth),
-            'pageName'  => Inertia::always('Daftar Pengajuan Penghargaan'),
-            'pengajuan' => $pengajuan,
-        ]);
-    }
-
-    // Detail pengajuan
-    public function show(Request $request, $id)
-    {
-        $auth = $request->attributes->get('auth');
-
-        if ((int) $id === 1) {
-            $pengajuan = [
-                'id'                => 1,
-                'nama_dosen'        => 'Dosen 1, Dosen 2',
-                'nip'               => '1987654321',
-                'nik'               => '12710511010001',
-                'jenis_penghargaan' => 'Publikasi Jurnal',
-                'nama_kegiatan'     => 'Penerapan Machine Learning untuk Prediksi Cuaca',
-                'indeks'            => 'Scopus Q2 – Journal of Computer Science',
-                'dana_maksimum'     => 10000000,
-                'status'            => 'Belum disetujui',
-                'bukti_url'         => '#',
-                'dana_disetujui'    => null,
-            ];
-
-            return Inertia::render('app/penghargaan/detail-pengajuan-jurnal-page', [
-                'auth'      => Inertia::always($auth),
-                'pageName'  => Inertia::always('Form Konfirmasi Jurnal'),
-                'pengajuan' => $pengajuan,
-            ]);
+        if (!$prosidingId) {
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Pilih seminar terlebih dahulu');
         }
 
-        $pengajuan = [
-            'id'                => (int) $id,
-            'nama_dosen'        => 'Lola Simanjuntak',
-            'nip'               => '1987654321',
-            'nik'               => '12710511010001',
-            'jenis_penghargaan' => 'Seminar Nasional',
-            'nama_kegiatan'     => 'Implementasi AI untuk Pendidikan',
-            'indeks'            => 'Scopus – Elsevier Procedia Computer Science',
-            'dana_maksimum'     => 7500000,
-            'status'            => 'Belum disetujui',
-            'bukti_url'         => '#',
-            'dana_disetujui'    => null,
+        // Cari dosen
+        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Ambil data seminar dari database
+        $seminar = SeminarModel::find($prosidingId);
+
+        if (!$seminar) {
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Seminar tidak ditemukan');
+        }
+
+        // Auto-fill data dari database
+        $selectedProsiding = [
+            'id' => $seminar->id,
+            'judul' => $seminar->nama_forum,
+            'sinta_id' => $dosen->sinta_id ?? '',
+            'scopus_id' => $dosen->scopus_id ?? '',
+            'nama_forum' => $seminar->nama_forum,
+            'penulis' => $auth->name,
+            'institusi_penyelenggara' => 'IT Del', // Bisa disesuaikan
+            'waktu_pelaksanaan' => now()->format('Y-m-d'),
+            'tempat_pelaksanaan' => 'Sitoluama', // Bisa disesuaikan
+            'url' => $seminar->website ?? '',
         ];
 
-        return Inertia::render('app/penghargaan/detail-pengajuan-seminar-page', [
-            'auth'      => Inertia::always($auth),
-            'pageName'  => Inertia::always('Form Konfirmasi Seminar'),
-            'pengajuan' => $pengajuan,
+        return Inertia::render('app/penghargaan/pengajuan-seminar-page', [
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Pengajuan Penghargaan Seminar'),
+            'selectedProsiding' => $selectedProsiding,
         ]);
     }
 
-    public function konfirmasi(Request $request, $id)
+    /**
+     * Simpan pengajuan penghargaan seminar ke database
+     */
+    public function storeSeminar(Request $request)
     {
-        $validated = $request->validate([
-            'status'         => 'required|string|in:Setuju,Menolak,Belum disetujui',
-            'dana_disetujui' => 'required|numeric|min:0',
+        $auth = $request->attributes->get('auth');
+        
+        // Cari dosen
+        $dosen = DosenModel::where('user_id', $auth->id)->first();
+        
+        if (!$dosen) {
+            return redirect()->route('home')
+                ->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        $request->validate([
+            'prosiding_id' => 'required|exists:m_seminar,id',
         ]);
 
-        return redirect()
-            ->route('penghargaan.daftar')
-            ->with('success', 'Data konfirmasi berhasil disimpan.');
+        try {
+            DB::beginTransaction();
+
+            // Cek apakah sudah pernah diajukan
+            $existing = PenghargaanSeminarModel::where('seminar_id', $request->prosiding_id)->first();
+            
+            if ($existing) {
+                DB::rollBack();
+                return redirect()->route('penghargaan.seminar.daftar')
+                    ->with('error', 'Seminar ini sudah pernah diajukan untuk penghargaan!');
+            }
+
+            // Insert ke tabel t_penghargaan_seminar
+            PenghargaanSeminarModel::create([
+                'id' => ToolsHelper::generateId(),
+                'seminar_id' => $request->prosiding_id,
+                'tanggal_diajukan' => now(),
+                'status_pengajuan' => 'Diajukan',
+                'nominal_usulan' => 0, // Bisa disesuaikan
+                'nominal_disetujui' => null,
+                'status' => 'belum_diverifikasi',
+                'tgl_pengajuan_penghargaan' => now(),
+                'tgl_verifikasi_lppm' => null,
+                'tgl_approve_hrd' => null,
+                'tgl_cair' => null,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penghargaan.seminar.daftar')
+                ->with('success', 'Pengajuan penghargaan seminar berhasil diajukan!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('penghargaan.seminar.pilih')
+                ->with('error', 'Gagal mengajukan penghargaan seminar: ' . $e->getMessage());
+        }
     }
+
+    // ... (method lain untuk penghargaan, statistik, dll)
 }

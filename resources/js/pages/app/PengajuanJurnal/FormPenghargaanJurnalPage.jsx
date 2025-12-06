@@ -4,79 +4,48 @@ import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 
 export default function FormPenghargaanJurnalPage() {
-    // Ambil data dari props (dari halaman sebelumnya atau edit)
     const props = usePage().props;
-    const isEdit = props.isEdit || false;
-    const jurnalData = props.jurnal || {};
-    
-    const [formData, setFormData] = useState({
-        sintaId: jurnalData.sintaId || props.sinta_id || "",
-        scopusId: jurnalData.scopusId || props.scopus_id || "",
-        prosiding: jurnalData.prosiding || props.prosiding || "",
-        judulMakalah: jurnalData.judulMakalah || "",
-        issn: jurnalData.issn || "",
-        volume: jurnalData.volume || "",
-        penulis: jurnalData.penulis || "",
-        nomor: jurnalData.nomor || "",
-        halPaper: jurnalData.halPaper || "",
-        tempatPelaksanaan: jurnalData.tempatPelaksanaan || "",
-        url: jurnalData.url || "",
-    });
 
-    const handleChange = (field, value) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
+    // Data auto-fill dari controller
+    const jurnalData = {
+        jurnal_id: props.jurnal_id || "",
+        sintaId: props.sinta_id || "",
+        scopusId: props.scopus_id || "",
+        judulMakalah: props.judulMakalah || "",
+        issn: props.issn || "",
+        volume: props.volume || "",
+        nomor: props.nomor || "",
+        namaJurnal: props.namaJurnal || "",
+        jumlahHalaman: props.jumlahHalaman || "",
+        url: props.url || "",
+        penulis: props.penulis || "",
     };
 
     const handleSubmit = () => {
-        // Validasi
-        if (!formData.judulMakalah) {
-            alert("Judul Makalah wajib diisi!");
-            return;
-        }
-        if (!formData.issn) {
-            alert("ISSN wajib diisi!");
+        if (!jurnalData.jurnal_id) {
+            alert("Data jurnal tidak valid!");
             return;
         }
 
-        console.log("Data yang akan dikirim:", formData);
-
-        if (isEdit) {
-            // Update data
-            router.put(route("pengajuan.jurnal.update", jurnalData.id), formData, {
+        // Submit ke backend
+        router.post(
+            route("pengajuan.jurnal.store"),
+            { jurnal_id: jurnalData.jurnal_id },
+            {
                 onSuccess: () => {
-                    alert("Data berhasil diupdate!");
+                    alert("Pengajuan penghargaan jurnal berhasil!");
                     router.visit(route("pengajuan.jurnal.daftar"));
                 },
                 onError: (errors) => {
                     console.error("Error:", errors);
-                    alert("Terjadi kesalahan saat mengupdate data");
+                    alert(
+                        "Terjadi kesalahan saat mengajukan penghargaan jurnal"
+                    );
                 },
-            });
-        } else {
-            // Submit data baru
-            router.post(route("pengajuan.jurnal.store"), formData, {
-                onSuccess: () => {
-                    alert("Data berhasil diajukan!");
-                    router.visit(route("pengajuan.jurnal.daftar"));
-                },
-                onError: (errors) => {
-                    console.error("Error:", errors);
-                    alert("Terjadi kesalahan saat mengajukan data");
-                },
-            });
-        }
+            }
+        );
     };
 
     return (
@@ -85,40 +54,48 @@ export default function FormPenghargaanJurnalPage() {
                 {/* Tombol Kembali */}
                 <Button
                     variant="outline"
-                    onClick={() => router.visit(route("pengajuan.jurnal.pilih-data"))}
+                    onClick={() =>
+                        router.visit(route("pengajuan.jurnal.pilih-data"))
+                    }
                     className="w-fit px-3 py-2 h-auto text-sm"
                 >
                     ← Kembali
                 </Button>
 
-                {/* Title - Space lebih compact */}
+                {/* Title */}
                 <h2 className="text-lg font-semibold text-center mb-1">
                     Pengajuan Penghargaan Jurnal oleh Dosen
                 </h2>
 
-                {/* Form Container - Space dikurangi */}
+                {/* Form Container - Data Auto-filled */}
                 <div className="border-2 border-blue-500 rounded-xl p-5 max-w-4xl mx-auto w-full">
                     <div className="flex flex-col gap-4">
+                        {/* Info Banner */}
+                        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+                            ✓ Data jurnal di bawah ini diisi otomatis dari
+                            database Anda
+                        </div>
+
                         {/* Row 1 - Sinta ID & Scopus ID */}
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium">Sinta ID</label>
+                                <label className="text-sm font-medium">
+                                    Sinta ID
+                                </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.sintaId}
-                                    onChange={(e) =>
-                                        handleChange("sintaId", e.target.value)
-                                    }
+                                    value={jurnalData.sintaId}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium">Scopus ID</label>
+                                <label className="text-sm font-medium">
+                                    Scopus ID
+                                </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.scopusId}
-                                    onChange={(e) =>
-                                        handleChange("scopusId", e.target.value)
-                                    }
+                                    value={jurnalData.scopusId}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                         </div>
@@ -126,101 +103,81 @@ export default function FormPenghargaanJurnalPage() {
                         {/* Judul Makalah */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-medium">
-                                Judul Makalah <span className="text-red-500">*</span>
+                                Judul Makalah
                             </label>
                             <Input
-                                placeholder="Value"
-                                value={formData.judulMakalah}
-                                onChange={(e) =>
-                                    handleChange("judulMakalah", e.target.value)
-                                }
+                                value={jurnalData.judulMakalah}
+                                disabled
+                                className="bg-muted"
                             />
                         </div>
 
-                        {/* Row 2 - ISSN, Volume, Penulis */}
+                        {/* Row 2 - ISSN, Volume, Nomor */}
                         <div className="grid md:grid-cols-3 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
-                                    ISSN <span className="text-red-500">*</span>
+                                    ISSN
                                 </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.issn}
-                                    onChange={(e) =>
-                                        handleChange("issn", e.target.value)
-                                    }
+                                    value={jurnalData.issn}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium">Volume</label>
+                                <label className="text-sm font-medium">
+                                    Volume
+                                </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.volume}
-                                    onChange={(e) =>
-                                        handleChange("volume", e.target.value)
-                                    }
+                                    value={jurnalData.volume}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium">Penulis</label>
-                                <Select
-                                    value={formData.penulis}
-                                    onValueChange={(value) =>
-                                        handleChange("penulis", value)
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Value" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="penulis1">
-                                            Penulis 1
-                                        </SelectItem>
-                                        <SelectItem value="penulis2">
-                                            Penulis 2
-                                        </SelectItem>
-                                        <SelectItem value="penulis3">
-                                            Penulis 3
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <label className="text-sm font-medium">
+                                    Nomor
+                                </label>
+                                <Input
+                                    value={jurnalData.nomor}
+                                    disabled
+                                    className="bg-muted"
+                                />
                             </div>
                         </div>
 
-                        {/* Nomor */}
+                        {/* Nama Jurnal */}
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium">Nomor</label>
+                            <label className="text-sm font-medium">
+                                Nama Jurnal
+                            </label>
                             <Input
-                                placeholder="Value"
-                                value={formData.nomor}
-                                onChange={(e) => handleChange("nomor", e.target.value)}
+                                value={jurnalData.namaJurnal}
+                                disabled
+                                className="bg-muted"
                             />
                         </div>
 
-                        {/* Row 3 - Hal Paper & Tempat Pelaksanaan */}
+                        {/* Row 3 - Jumlah Halaman & Penulis */}
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
-                                    Hal Paper
+                                    Jumlah Halaman
                                 </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.halPaper}
-                                    onChange={(e) =>
-                                        handleChange("halPaper", e.target.value)
-                                    }
+                                    value={jurnalData.jumlahHalaman}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
-                                    Tempat Pelaksanaan
+                                    Penulis
                                 </label>
                                 <Input
-                                    placeholder="Value"
-                                    value={formData.tempatPelaksanaan}
-                                    onChange={(e) =>
-                                        handleChange("tempatPelaksanaan", e.target.value)
-                                    }
+                                    value={jurnalData.penulis}
+                                    disabled
+                                    className="bg-muted"
                                 />
                             </div>
                         </div>
@@ -229,19 +186,16 @@ export default function FormPenghargaanJurnalPage() {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-medium">URL</label>
                             <Input
-                                placeholder="Value"
-                                value={formData.url}
-                                onChange={(e) => handleChange("url", e.target.value)}
+                                value={jurnalData.url}
+                                disabled
+                                className="bg-muted"
                             />
                         </div>
 
-                        {/* Button Ajukan - Fixed di kanan bawah */}
+                        {/* Button Ajukan */}
                         <div className="flex justify-end pt-2">
-                            <Button
-                                onClick={handleSubmit}
-                                className="px-8"
-                            >
-                                {isEdit ? "Update" : "Ajukan"}
+                            <Button onClick={handleSubmit} className="px-8">
+                                Ajukan Penghargaan
                             </Button>
                         </div>
                     </div>
