@@ -83,15 +83,15 @@ return [
             ]) : [],
         ],
 
-        'pgsql' => [
+        'pgsql_lppm' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
+            'url' => env('DATABASE_LPPM_URL'),
+            'host' => env('DB_LPPM_HOST', '127.0.0.1'),
+            'port' => env('DB_LPPM_PORT', '5432'),
+            'database' => env('DB_LPPM_DATABASE', 'db_sdi_lppm'),
+            'username' => env('DB_LPPM_USERNAME', 'postgres'),
+            'password' => env('DB_LPPM_PASSWORD', 'postgres'),
+            'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',

@@ -13,7 +13,10 @@ use App\Http\Controllers\App\Todo\TodoController;
 // PENGHARGAAN
 use App\Http\Controllers\App\Penghargaan\StatistikController;
 use App\Http\Controllers\App\Penghargaan\PengajuanController;
-use App\Http\Controllers\App\Penghargaan\DashboardHrdController; // <--- TAMBAH INI
+use App\Http\Controllers\App\Penghargaan\DashboardHrdController;
+
+// PENGAJUAN SEMINAR
+use App\Http\Controllers\App\Penghargaan\SeminarController;
 
 // PENGAJUAN JURNAL
 use App\Http\Controllers\App\PengajuanJurnal\JurnalController;
@@ -125,19 +128,19 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
             // ---------- PENGHARGAAN SEMINAR ----------
             // Daftar Seminar yang sudah diajukan
-            Route::get('/seminar/daftar', [PengajuanController::class, 'daftarSeminar'])
+            Route::get('/seminar/daftar', [SeminarController::class, 'daftarSeminar'])
                 ->name('penghargaan.seminar.daftar');
 
             // Pilih Prosiding (Step 1)
-            Route::get('/seminar/pilih', [PengajuanController::class, 'pilihProsiding'])
+            Route::get('/seminar/pilih', [SeminarController::class, 'pilihProsiding'])
                 ->name('penghargaan.seminar.pilih');
 
             // Form Pengajuan Seminar (Step 2)
-            Route::get('/seminar', [PengajuanController::class, 'formSeminar'])
+            Route::get('/seminar', [SeminarController::class, 'formSeminar'])
                 ->name('penghargaan.seminar');
 
             // Simpan Pengajuan Seminar
-            Route::post('/seminar', [PengajuanController::class, 'storeSeminar'])
+            Route::post('/seminar', [SeminarController::class, 'storeSeminar'])
                 ->name('penghargaan.seminar.store');
         });
 
