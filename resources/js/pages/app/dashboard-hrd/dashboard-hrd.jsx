@@ -25,24 +25,14 @@ export default function DashboardHRDPage({ statistik, summary }) {
     const rekapJenis = summary?.rekapJenisBulanIni ?? {};
     const jurnalBlnIni = rekapJenis.jurnal ?? 0;
     const seminarBlnIni = rekapJenis.seminar ?? 0;
-    const bukuBlnIni = rekapJenis.buku ?? 0;
 
     const chartData = statistik ?? [];
 
     return (
         <AppLayout>
             <div className="flex flex-col gap-6 p-4">
-                {/* Pencarian dan Dropdown */}
+                {/* Dropdown Filter */}
                 <div className="flex flex-wrap gap-4 items-center">
-                    <input
-                        type="text"
-                        placeholder="Type to search"
-                        className="p-2 border border-gray-300 rounded-lg flex-grow min-w-[220px]"
-                    />
-                    <button className="p-2 rounded-lg min-w-[90px] bg-blue-500 text-white">
-                        Search
-                    </button>
-
                     <select className="p-2 border border-gray-300 rounded-lg min-w-[160px]">
                         <option value="name">Search by Name</option>
                         <option value="date">Search by Date</option>
@@ -87,7 +77,6 @@ export default function DashboardHRDPage({ statistik, summary }) {
                             <div className="text-sm space-y-1">
                                 <div>Jurnal: {jurnalBlnIni}</div>
                                 <div>Seminar: {seminarBlnIni}</div>
-                                <div>Buku: {bukuBlnIni}</div>
                             </div>
                         </CardContent>
                     </Card>
@@ -123,13 +112,6 @@ export default function DashboardHRDPage({ statistik, summary }) {
                                             stroke="#ef4444"
                                             strokeWidth={2}
                                         />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="buku"
-                                            name="Buku"
-                                            stroke="#eab308"
-                                            strokeWidth={2}
-                                        />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -139,7 +121,9 @@ export default function DashboardHRDPage({ statistik, summary }) {
                     <div className="md:w-[320px] flex flex-col gap-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Total Penghargaan Bulan Ini</CardTitle>
+                                <CardTitle>
+                                    Total Penghargaan Bulan Ini
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-semibold">
@@ -154,7 +138,9 @@ export default function DashboardHRDPage({ statistik, summary }) {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-lg font-semibold">
-                                    {formatRupiah(summary?.totalDanaApprove ?? 0)}
+                                    {formatRupiah(
+                                        summary?.totalDanaApprove ?? 0
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

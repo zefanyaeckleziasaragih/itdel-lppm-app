@@ -12,6 +12,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $auth = $request->attributes->get('auth');
+        dd($auth);
         $authToken = ToolsHelper::getAuthToken();
 
         return Inertia::render('app/home/home-page', [

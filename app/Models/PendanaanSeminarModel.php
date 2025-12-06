@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SeminarModel extends Model
+class PendanaanSeminarModel extends Model
 {
-    protected $table = 'm_seminar';
+    protected $table = 't_pendanaan_seminar';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -16,8 +16,8 @@ class SeminarModel extends Model
 
     protected $fillable = [
         'id',
-        'nama_forum',
-        'website',
-        'biaya'
+        'seminar_id',
+        'nominal',
+        'status'
     ];
 }
