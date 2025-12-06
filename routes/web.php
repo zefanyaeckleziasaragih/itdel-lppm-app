@@ -13,16 +13,16 @@ use App\Http\Controllers\App\Todo\TodoController;
 // PENGHARGAAN
 use App\Http\Controllers\App\Penghargaan\StatistikController;
 use App\Http\Controllers\App\Penghargaan\PengajuanController;
-use App\Http\Controllers\App\Penghargaan\DashboardHrdController;
-
-// PENGAJUAN SEMINAR
-use App\Http\Controllers\App\Penghargaan\SeminarController;
+use App\Http\Controllers\App\Penghargaan\DashboardHrdController; // <--- TAMBAH INI
 
 // PENGAJUAN JURNAL
 use App\Http\Controllers\App\PengajuanJurnal\JurnalController;
 
 // DAFTAR PENGHARGAAN (Admin)
 use App\Http\Controllers\App\DaftarPenghargaan\DaftarPenghargaanController;
+
+// DUMMY DATA
+use App\Http\Controllers\App\Dummy\DummyDataController;
 
 Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
@@ -123,30 +123,28 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
             Route::post('/daftar/{id}/konfirmasi', [PengajuanController::class, 'konfirmasi'])
                 ->name('penghargaan.konfirmasi');
 
-            // ---------- PENGHARGAAN SEMINAR (HANYA DOSEN) ----------
-            Route::middleware('check.dosen')->group(function () {
-                // Daftar Seminar yang sudah diajukan
-                Route::get('/seminar/daftar', [SeminarController::class, 'daftarSeminar'])
-                    ->name('penghargaan.seminar.daftar');
+            // ---------- PENGHARGAAN SEMINAR ----------
+            // Daftar Seminar yang sudah diajukan
+            Route::get('/seminar/daftar', [PengajuanController::class, 'daftarSeminar'])
+                ->name('penghargaan.seminar.daftar');
 
-                // Pilih Prosiding (Step 1)
-                Route::get('/seminar/pilih', [SeminarController::class, 'pilihProsiding'])
-                    ->name('penghargaan.seminar.pilih');
+            // Pilih Prosiding (Step 1)
+            Route::get('/seminar/pilih', [PengajuanController::class, 'pilihProsiding'])
+                ->name('penghargaan.seminar.pilih');
 
-                // Form Pengajuan Seminar (Step 2)
-                Route::get('/seminar', [SeminarController::class, 'formSeminar'])
-                    ->name('penghargaan.seminar');
+            // Form Pengajuan Seminar (Step 2)
+            Route::get('/seminar', [PengajuanController::class, 'formSeminar'])
+                ->name('penghargaan.seminar');
 
-                // Simpan Pengajuan Seminar
-                Route::post('/seminar', [SeminarController::class, 'storeSeminar'])
-                    ->name('penghargaan.seminar.store');
-            });
+            // Simpan Pengajuan Seminar
+            Route::post('/seminar', [PengajuanController::class, 'storeSeminar'])
+                ->name('penghargaan.seminar.store');
         });
 
         // =======================
-        // ⭐ Pengajuan Jurnal (HANYA DOSEN)
+        // ⭐ Pengajuan Jurnal
         // =======================
-        Route::prefix('pengajuan-jurnal')->name('pengajuan.jurnal.')->middleware('check.dosen')->group(function () {
+        Route::prefix('pengajuan-jurnal')->name('pengajuan.jurnal.')->group(function () {
 
             // Halaman Daftar Jurnal
             Route::get('/', [JurnalController::class, 'index'])
@@ -187,6 +185,14 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
             Route::get('/{id}', [DaftarPenghargaanController::class, 'show'])
                 ->name('daftar-penghargaan.detail');
+        });
+
+        // =======================
+        // Dummy Data
+        // =======================
+        Route::prefix('dummy')->group(function () {
+            Route::get('/', [DummyDataController::class, 'index'])
+                ->name('dummy.index');
         });
     }); // end middleware check.auth
 }); // end middleware throttle + inertia

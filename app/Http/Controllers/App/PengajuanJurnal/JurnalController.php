@@ -2,11 +2,7 @@
 
 namespace App\Http\Controllers\App\PengajuanJurnal;
 
-use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
-use App\Models\LPPM\DosenModel;
-use App\Models\LPPM\JurnalModel;
-use App\Models\LPPM\PenghargaanJurnalModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,34 +11,64 @@ class JurnalController extends Controller
     /**
      * Halaman Daftar Jurnal
      */
-    public function index(Request $request)
+    public function index()
     {
-        $auth = $request->attributes->get('auth');
-        
-        // Cari dosen berdasarkan user_id
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
-        
-        if (!$dosen) {
-            return redirect()->route('home')->with('error', 'Data dosen tidak ditemukan');
-        }
+        // TODO: Ganti dengan data dari database
+        $jurnal = [
+            [
+                'id' => 1,
+                'judul' => 'Implementasi Machine Learning dalam Prediksi Cuaca',
+                'penulis' => 'Dr. Ahmad Yani',
+                'status' => 'Sudah Diverifikasi',
+                'tanggal' => '2024-01-15'
+            ],
+            [
+                'id' => 2,
+                'judul' => 'Analisis Big Data untuk Sistem Rekomendasi',
+                'penulis' => 'Prof. Siti Nurhaliza',
+                'status' => 'Belum Diverifikasi',
+                'tanggal' => '2024-02-20'
+            ],
+            [
+                'id' => 3,
+                'judul' => 'Pengembangan Aplikasi IoT untuk Smart Home',
+                'penulis' => 'Dr. Budi Santoso',
+                'status' => 'Sudah Diverifikasi',
+                'tanggal' => '2024-03-10'
+            ],
+        ];
 
-        // Ambil jurnal milik dosen ini dengan penghargaan
-        $jurnalList = $dosen->jurnals()
-            ->with('penghargaan')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($jurnal) {
-                return [
-                    'id' => $jurnal->id,
-                    'judul' => $jurnal->judul,
-                    'penulis' => $jurnal->dosens->pluck('user_id')->join(', '), // Sesuaikan dengan kebutuhan
-                    'status' => $jurnal->penghargaan ? $jurnal->penghargaan->status : 'Belum Diajukan',
-                    'tanggal' => $jurnal->created_at->format('Y-m-d'),
-                ];
-            });
+        return Inertia::render('PengajuanJurnal/DaftarJurnalPage', [
+            'jurnal' => $jurnal
+        ]);
+    }
 
-        return Inertia::render('app/PengajuanJurnal/DaftarJurnalPage', [
-            'jurnal' => $jurnalList,
+    /**
+     * Halaman Pilih Data (Sebelum Form)
+     */
+    public function pilihData(Request $request)
+    {
+        // TODO: Ganti dengan data dari database
+        $sintaList = [
+            ['id' => 'S001', 'nama' => 'Dosen A - SINTA'],
+            ['id' => 'S002', 'nama' => 'Dosen B - SINTA'],
+            ['id' => 'S003', 'nama' => 'Dosen C - SINTA'],
+        ];
+
+        $scopusList = [
+            ['id' => 'SC001', 'nama' => 'Dosen A - SCOPUS'],
+            ['id' => 'SC002', 'nama' => 'Dosen B - SCOPUS'],
+            ['id' => 'SC003', 'nama' => 'Dosen C - SCOPUS'],
+        ];
+
+        return Inertia::render('PengajuanJurnal/PilihDataPenghargaanPage', [
+            'sintaList'  => $sintaList,
+            'scopusList' => $scopusList,
+
+            // Passing query parameters jika ada
+            'sinta_id'   => $request->query('sinta_id'),
+            'scopus_id'  => $request->query('scopus_id'),
+            'prosiding'  => $request->query('prosiding'), // Tetap pakai 'prosiding' untuk backward compatibility
         ]);
     }
 
@@ -51,19 +77,11 @@ class JurnalController extends Controller
      */
     public function form(Request $request)
     {
-        $auth = $request->attributes->get('auth');
-        
-        // Cari dosen
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
-        
-        if (!$dosen) {
-            return redirect()->route('home')->with('error', 'Data dosen tidak ditemukan');
-        }
-
-        return Inertia::render('app/PengajuanJurnal/FormPenghargaanJurnalPage', [
-            'sinta_id' => $dosen->sinta_id,
-            'scopus_id' => $dosen->scopus_id,
-            'isEdit' => false,
+        return Inertia::render('PengajuanJurnal/FormPenghargaanJurnalPage', [
+            'sinta_id'   => $request->query('sinta_id'),
+            'scopus_id'  => $request->query('scopus_id'),
+            'prosiding'  => $request->query('prosiding'), // Data jurnal yang dipilih
+            'isEdit'     => false,
         ]);
     }
 
@@ -72,43 +90,24 @@ class JurnalController extends Controller
      */
     public function store(Request $request)
     {
-        $auth = $request->attributes->get('auth');
-        
-        // Cari dosen
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
-        
-        if (!$dosen) {
-            return redirect()->route('home')->with('error', 'Data dosen tidak ditemukan');
-        }
-
         $validated = $request->validate([
+            'sintaId' => 'nullable|string|max:255',
+            'scopusId' => 'nullable|string|max:255',
+            'prosiding' => 'nullable|string|max:255', // Field untuk data jurnal
             'judulMakalah' => 'required|string|max:500',
             'issn' => 'required|string|max:50',
             'volume' => 'nullable|string|max:50',
+            'penulis' => 'nullable|string|max:255',
             'nomor' => 'nullable|string|max:50',
             'halPaper' => 'nullable|string|max:50',
             'tempatPelaksanaan' => 'nullable|string|max:255',
             'url' => 'nullable|url|max:500',
-            'quartile' => 'nullable|string|max:10',
         ]);
 
-        // Simpan jurnal
-        $jurnal = JurnalModel::create([
-            'id' => ToolsHelper::generateId(),
-            'judul' => $validated['judulMakalah'],
-            'nama_jurnal' => '', // Sesuaikan dengan kebutuhan
-            'issn' => $validated['issn'],
-            'volume' => $validated['volume'],
-            'nomor' => $validated['nomor'],
-            'halaman' => $validated['halPaper'],
-            'tahun_terbit' => now()->year,
-            'url' => $validated['url'],
-            'quartile' => $validated['quartile'],
-            'kategori' => '', // Sesuaikan
-        ]);
-
-        // Hubungkan dengan dosen
-        $jurnal->dosens()->attach($dosen->id);
+        // TODO: Simpan ke database
+        // Example: Jurnal::create($validated);
+        
+        \Log::info('Data Jurnal Baru:', $validated);
 
         return redirect()->route('pengajuan.jurnal.daftar')
             ->with('success', 'Data jurnal berhasil diajukan!');
@@ -119,20 +118,27 @@ class JurnalController extends Controller
      */
     public function edit($id)
     {
-        $jurnal = JurnalModel::findOrFail($id);
+        // TODO: Ambil data dari database berdasarkan ID
+        // Example: $jurnal = Jurnal::findOrFail($id);
+        
+        $jurnal = [
+            'id' => $id,
+            'sintaId' => '123456',
+            'scopusId' => '789012',
+            'prosiding' => 'jurnal1',
+            'judulMakalah' => 'Contoh Judul Makalah',
+            'issn' => '1234-5678',
+            'volume' => '10',
+            'penulis' => 'penulis1',
+            'nomor' => '2',
+            'halPaper' => '10-20',
+            'tempatPelaksanaan' => 'Jakarta',
+            'url' => 'https://example.com',
+        ];
 
-        return Inertia::render('app/PengajuanJurnal/FormPenghargaanJurnalPage', [
-            'jurnal' => [
-                'id' => $jurnal->id,
-                'judulMakalah' => $jurnal->judul,
-                'issn' => $jurnal->issn,
-                'volume' => $jurnal->volume,
-                'nomor' => $jurnal->nomor,
-                'halPaper' => $jurnal->halaman,
-                'url' => $jurnal->url,
-                'quartile' => $jurnal->quartile,
-            ],
-            'isEdit' => true,
+        return Inertia::render('PengajuanJurnal/FormPenghargaanJurnalPage', [
+            'jurnal' => $jurnal,
+            'isEdit' => true
         ]);
     }
 
@@ -142,26 +148,24 @@ class JurnalController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
+            'sintaId' => 'nullable|string|max:255',
+            'scopusId' => 'nullable|string|max:255',
+            'prosiding' => 'nullable|string|max:255',
             'judulMakalah' => 'required|string|max:500',
             'issn' => 'required|string|max:50',
             'volume' => 'nullable|string|max:50',
+            'penulis' => 'nullable|string|max:255',
             'nomor' => 'nullable|string|max:50',
             'halPaper' => 'nullable|string|max:50',
+            'tempatPelaksanaan' => 'nullable|string|max:255',
             'url' => 'nullable|url|max:500',
-            'quartile' => 'nullable|string|max:10',
         ]);
 
-        $jurnal = JurnalModel::findOrFail($id);
+        // TODO: Update data di database
+        // Example: $jurnal = Jurnal::findOrFail($id);
+        // $jurnal->update($validated);
         
-        $jurnal->update([
-            'judul' => $validated['judulMakalah'],
-            'issn' => $validated['issn'],
-            'volume' => $validated['volume'],
-            'nomor' => $validated['nomor'],
-            'halaman' => $validated['halPaper'],
-            'url' => $validated['url'],
-            'quartile' => $validated['quartile'],
-        ]);
+        \Log::info("Update Jurnal ID $id:", $validated);
 
         return redirect()->route('pengajuan.jurnal.daftar')
             ->with('success', 'Data jurnal berhasil diupdate!');
@@ -172,13 +176,10 @@ class JurnalController extends Controller
      */
     public function delete($id)
     {
-        $jurnal = JurnalModel::findOrFail($id);
+        // TODO: Hapus data dari database
+        // Example: Jurnal::findOrFail($id)->delete();
         
-        // Hapus relasi dosen
-        $jurnal->dosens()->detach();
-        
-        // Hapus jurnal
-        $jurnal->delete();
+        \Log::info("Hapus Jurnal ID: $id");
 
         return redirect()->route('pengajuan.jurnal.daftar')
             ->with('success', 'Data jurnal berhasil dihapus!');
