@@ -24,42 +24,44 @@ class JurnalController extends Controller
         $dosen = DosenModel::where('user_id', $auth->id)->first();
         
         if (!$dosen) {
-            return redirect()->route('home')
-                ->with('error', 'Data dosen tidak ditemukan');
+            // Jika bukan dosen, tampilkan list kosong
+            $jurnal = [];
+        } else {
+            // Ambil jurnal milik dosen ini
+            $jurnal = DB::table('p_jurnal_user as pju')
+                ->join('m_jurnal as j', 'pju.jurnal_id', '=', 'j.id')
+                ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
+                ->where('pju.user_id', $auth->id)
+                ->select(
+                    'j.id',
+                    'j.judul_paper as judul',
+                    'j.created_at as tanggal',
+                    DB::raw("CASE 
+                        WHEN pj.tgl_cair IS NOT NULL THEN 'Sudah Diverifikasi'
+                        WHEN pj.tgl_approve_hrd IS NOT NULL THEN 'Sudah Diverifikasi'
+                        WHEN pj.tgl_verifikasi_lppm IS NOT NULL THEN 'Sudah Diverifikasi'
+                        WHEN pj.id IS NOT NULL THEN 'Belum Diverifikasi'
+                        ELSE 'Belum Diajukan'
+                    END as status")
+                )
+                ->orderBy('j.created_at', 'desc')
+                ->get()
+                ->map(function ($item) use ($auth) {
+                    return [
+                        'id' => $item->id,
+                        'judul' => $item->judul,
+                        'penulis' => $auth->name,
+                        'status' => $item->status,
+                        'tanggal' => date('Y-m-d', strtotime($item->tanggal)),
+                    ];
+                })
+                ->toArray();
         }
 
-        // Ambil jurnal milik dosen yang sudah diajukan penghargaan
-        $jurnal = DB::table('p_jurnal_user as pju')
-            ->join('m_jurnal as j', 'pju.jurnal_id', '=', 'j.id')
-            ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
-            ->where('pju.user_id', $auth->id)
-            ->select(
-                'j.id',
-                'j.judul_paper as judul',
-                'j.created_at as tanggal',
-                DB::raw("CASE 
-                    WHEN pj.tgl_cair IS NOT NULL THEN 'Sudah Diverifikasi'
-                    WHEN pj.tgl_approve_hrd IS NOT NULL THEN 'Sudah Diverifikasi'
-                    WHEN pj.tgl_verifikasi_lppm IS NOT NULL THEN 'Sudah Diverifikasi'
-                    WHEN pj.id IS NOT NULL THEN 'Belum Diverifikasi'
-                    ELSE 'Belum Diajukan'
-                END as status")
-            )
-            ->orderBy('j.created_at', 'desc')
-            ->get()
-            ->map(function ($item) use ($auth) {
-                return [
-                    'id' => $item->id,
-                    'judul' => $item->judul,
-                    'penulis' => $auth->name,
-                    'status' => $item->status,
-                    'tanggal' => date('Y-m-d', strtotime($item->tanggal)),
-                ];
-            })
-            ->toArray();
-
-        return Inertia::render('PengajuanJurnal/DaftarJurnalPage', [
-            'jurnal' => $jurnal
+        return Inertia::render('app/PengajuanJurnal/DaftarJurnalPage', [
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Daftar Jurnal'),
+            'jurnal' => $jurnal,
         ]);
     }
 
@@ -99,10 +101,10 @@ class JurnalController extends Controller
             })
             ->toArray();
 
-        return Inertia::render('PengajuanJurnal/PilihDataPenghargaanPage', [
-            'sintaList'  => [], // Tidak digunakan lagi
-            'scopusList' => [], // Tidak digunakan lagi
-            'jurnalList' => $jurnalList, // List jurnal dari database
+        return Inertia::render('app/PengajuanJurnal/PilihDataPenghargaanPage', [
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Pilih Data Jurnal'),
+            'jurnalList' => $jurnalList,
             'sinta_id'   => $dosen->sinta_id ?? '',
             'scopus_id'  => $dosen->scopus_id ?? '',
         ]);
@@ -138,7 +140,9 @@ class JurnalController extends Controller
         }
 
         // Auto-fill data dari database
-        return Inertia::render('PengajuanJurnal/FormPenghargaanJurnalPage', [
+        return Inertia::render('app/PengajuanJurnal/FormPenghargaanJurnalPage', [
+            'auth' => Inertia::always($auth),
+            'pageName' => Inertia::always('Form Pengajuan Jurnal'),
             'sinta_id'   => $dosen->sinta_id ?? '',
             'scopus_id'  => $dosen->scopus_id ?? '',
             'jurnal_id'  => $jurnal->id,
@@ -191,7 +195,7 @@ class JurnalController extends Controller
                 'jurnal_id' => $request->jurnal_id,
                 'tanggal_diajukan' => now(),
                 'status_pengajuan' => 'Diajukan',
-                'nominal_usulan' => 0, // Bisa disesuaikan
+                'nominal_usulan' => 0,
                 'nominal_disetujui' => null,
                 'status' => 'belum_diverifikasi',
                 'tgl_pengajuan_penghargaan' => now(),
@@ -211,6 +215,4 @@ class JurnalController extends Controller
                 ->with('error', 'Gagal mengajukan penghargaan jurnal: ' . $e->getMessage());
         }
     }
-
-    // Edit, Update, Delete methods tetap sama...
 }

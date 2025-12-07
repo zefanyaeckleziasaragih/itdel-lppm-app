@@ -21,9 +21,6 @@ use App\Http\Controllers\App\PengajuanJurnal\JurnalController;
 // DAFTAR PENGHARGAAN (Admin)
 use App\Http\Controllers\App\DaftarPenghargaan\DaftarPenghargaanController;
 
-// DUMMY DATA
-use App\Http\Controllers\App\Dummy\DummyDataController;
-
 Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
     // =======================
@@ -38,22 +35,16 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
     // Authentication Routes
     // =======================
     Route::prefix('auth')->group(function () {
-
         Route::get('/login', [AuthController::class, 'login'])
             ->name('auth.login');
-
         Route::post('/login-check', [AuthController::class, 'postLoginCheck'])
             ->name('auth.login-check');
-
         Route::post('/login-post', [AuthController::class, 'postLogin'])
             ->name('auth.login-post');
-
         Route::get('/logout', [AuthController::class, 'logout'])
             ->name('auth.logout');
-
         Route::get('/totp', [AuthController::class, 'totp'])
             ->name('auth.totp');
-
         Route::post('/totp-post', [AuthController::class, 'postTotp'])
             ->name('auth.totp-post');
     });
@@ -73,13 +64,10 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         Route::prefix('hak-akses')->group(function () {
             Route::get('/', [HakAksesController::class, 'index'])
                 ->name('hak-akses');
-
             Route::post('/change', [HakAksesController::class, 'postChange'])
                 ->name('hak-akses.change-post');
-
             Route::post('/delete', [HakAksesController::class, 'postDelete'])
                 ->name('hak-akses.delete-post');
-
             Route::post('/delete-selected', [HakAksesController::class, 'postDeleteSelected'])
                 ->name('hak-akses.delete-selected-post');
         });
@@ -90,10 +78,8 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         Route::prefix('todo')->group(function () {
             Route::get('/', [TodoController::class, 'index'])
                 ->name('todo');
-
             Route::post('/change', [TodoController::class, 'postChange'])
                 ->name('todo.change-post');
-
             Route::post('/delete', [TodoController::class, 'postDelete'])
                 ->name('todo.delete-post');
         });
@@ -112,11 +98,11 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('penghargaan.statistik');
 
             // ---------- Daftar dosen pengajuan penghargaan ----------
-            Route::get('/daftar', [PengajuanController::class, 'index'])
+            Route::get('/daftar', [PengajuanController::class, 'daftarPengajuan'])
                 ->name('penghargaan.daftar');
 
             // Detail / Form konfirmasi
-            Route::get('/daftar/{id}', [PengajuanController::class, 'show'])
+            Route::get('/daftar/{id}', [PengajuanController::class, 'detailPengajuan'])
                 ->name('penghargaan.detail');
 
             // Simpan konfirmasi (pencairan / status)
@@ -133,11 +119,11 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('penghargaan.seminar.pilih');
 
             // Form Pengajuan Seminar (Step 2)
-            Route::get('/seminar', [PengajuanController::class, 'formSeminar'])
+            Route::get('/seminar/form', [PengajuanController::class, 'formSeminar'])
                 ->name('penghargaan.seminar');
 
             // Simpan Pengajuan Seminar
-            Route::post('/seminar', [PengajuanController::class, 'storeSeminar'])
+            Route::post('/seminar/store', [PengajuanController::class, 'storeSeminar'])
                 ->name('penghargaan.seminar.store');
         });
 
@@ -152,7 +138,7 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('pilih-data');
 
             Route::get('/form', [JurnalController::class, 'form'])
-                ->name('form'); // Akan menerima ?jurnal_id=xxx
+                ->name('form');
 
             Route::post('/store', [JurnalController::class, 'store'])
                 ->name('store');
@@ -162,7 +148,6 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         // DAFTAR PENGHARGAAN (Admin)
         // =======================
         Route::prefix('daftar-penghargaan')->group(function () {
-
             Route::get('/', [DaftarPenghargaanController::class, 'index'])
                 ->name('daftar-penghargaan');
 
@@ -170,12 +155,5 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('daftar-penghargaan.detail');
         });
 
-        // =======================
-        // Dummy Data
-        // =======================
-        Route::prefix('dummy')->group(function () {
-            Route::get('/', [DummyDataController::class, 'index'])
-                ->name('dummy.index');
-        });
     }); // end middleware check.auth
 }); // end middleware throttle + inertia
