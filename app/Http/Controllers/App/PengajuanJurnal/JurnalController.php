@@ -76,8 +76,8 @@ class JurnalController extends Controller
         $dosen = DosenModel::where('user_id', $auth->id)->first();
         
         if (!$dosen) {
-            return redirect()->route('home')
-                ->with('error', 'Data dosen tidak ditemukan');
+            return redirect()->route('pengajuan.jurnal.daftar')
+                ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
         }
 
         // Ambil jurnal milik dosen yang BELUM diajukan penghargaan
@@ -85,12 +85,8 @@ class JurnalController extends Controller
             ->join('m_jurnal as j', 'pju.jurnal_id', '=', 'j.id')
             ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
             ->where('pju.user_id', $auth->id)
-            ->whereNull('pj.id') // Hanya yang belum ada di tabel penghargaan
-            ->select(
-                'j.id',
-                'j.judul_paper as judul',
-                'j.nama_jurnal'
-            )
+            ->whereNull('pj.id')
+            ->select('j.id', 'j.judul_paper as judul', 'j.nama_jurnal')
             ->get()
             ->map(function($jurnal) {
                 return [
@@ -105,8 +101,8 @@ class JurnalController extends Controller
             'auth' => Inertia::always($auth),
             'pageName' => Inertia::always('Pilih Data Jurnal'),
             'jurnalList' => $jurnalList,
-            'sinta_id'   => $dosen->sinta_id ?? '',
-            'scopus_id'  => $dosen->scopus_id ?? '',
+            'sinta_id' => $dosen->sinta_id ?? '',
+            'scopus_id' => $dosen->scopus_id ?? '',
         ]);
     }
 

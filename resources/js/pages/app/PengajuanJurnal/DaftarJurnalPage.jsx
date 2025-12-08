@@ -143,9 +143,17 @@ export default function DaftarJurnalPage() {
 
             {/* TOMBOL TAMBAH */}
             <Button
-                onClick={() =>
-                    router.visit(route("pengajuan.jurnal.pilih-data"))
-                }
+                onClick={() => {
+                    console.log(
+                        "Navigating to:",
+                        route("pengajuan.jurnal.pilih-data")
+                    );
+                    router.visit(route("pengajuan.jurnal.pilih-data"), {
+                        onError: (errors) => {
+                            console.error("Navigation error:", errors);
+                        },
+                    });
+                }}
                 className="fixed bottom-6 right-6 px-6 py-5 text-base shadow-lg"
             >
                 Tambahkan

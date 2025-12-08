@@ -154,43 +154,43 @@ class PengajuanController extends Controller
     /**
      * Halaman pilih prosiding (Step 1)
      */
-    public function pilihProsiding(Request $request)
-    {
-        $auth = $request->attributes->get('auth');
+        public function pilihProsiding(Request $request)
+        {
+            $auth = $request->attributes->get('auth');
 
-        // Cari dosen
-        $dosen = DosenModel::where('user_id', $auth->id)->first();
-        
-        if (!$dosen) {
-            return redirect()->route('home')
-                ->with('error', 'Data dosen tidak ditemukan');
+            // Cari dosen
+            $dosen = DosenModel::where('user_id', $auth->id)->first();
+            
+            if (!$dosen) {
+                return redirect()->route('penghargaan.seminar.daftar')
+                    ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
+            }
+
+            // Ambil list seminar yang belum diajukan penghargaan
+            $prosidingList = DB::table('p_seminar_user as psu')
+                ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
+                ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
+                ->where('psu.user_id', $auth->id)
+                ->whereNull('ps.id') // Hanya yang belum ada di tabel penghargaan
+                ->select('s.id', 's.nama_forum as judul', 's.website')
+                ->get()
+                ->map(function($p) use ($dosen) {
+                    return [
+                        'id' => $p->id,
+                        'judul' => $p->judul,
+                        'sinta_id' => $dosen->sinta_id ?? '',
+                        'scopus_id' => $dosen->scopus_id ?? '',
+                        'website' => $p->website ?? '',
+                    ];
+                })
+                ->toArray();
+
+            return Inertia::render('app/penghargaan/pilih-prosiding-page', [
+                'auth' => Inertia::always($auth),
+                'pageName' => Inertia::always('Pilih Prosiding'),
+                'prosidingList' => $prosidingList,
+            ]);
         }
-
-        // Ambil list seminar yang tersedia & belum diajukan
-        $prosidingList = DB::table('p_seminar_user as psu')
-            ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
-            ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
-            ->where('psu.user_id', $auth->id)
-            ->whereNull('ps.id') // Hanya yang belum ada di tabel penghargaan
-            ->select('s.id', 's.nama_forum as judul', 's.website')
-            ->get()
-            ->map(function($p) use ($dosen) {
-                return [
-                    'id' => $p->id,
-                    'judul' => $p->judul,
-                    'sinta_id' => $dosen->sinta_id ?? '',
-                    'scopus_id' => $dosen->scopus_id ?? '',
-                    'website' => $p->website ?? '',
-                ];
-            })
-            ->toArray();
-
-        return Inertia::render('app/penghargaan/pilih-prosiding-page', [
-            'auth' => Inertia::always($auth),
-            'pageName' => Inertia::always('Pilih Prosiding'),
-            'prosidingList' => $prosidingList,
-        ]);
-    }
 
     /**
      * Form pengajuan seminar (Step 2)

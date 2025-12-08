@@ -155,5 +155,36 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('daftar-penghargaan.detail');
         });
 
-    }); // end middleware check.auth
-}); // end middleware throttle + inertia
+        Route::get('/test-db', function () {
+            try {
+                $dosens = DB::table('m_dosen')->get();
+                $jurnals = DB::table('m_jurnal')->get();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'dosen_count' => $dosens->count(),
+                    'jurnal_count' => $jurnals->count(),
+                    'sample_dosen' => $dosens->first(),
+                    'sample_jurnal' => $jurnals->first()
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
+            }
+        });
+
+        Route::get('/debug-user', function() {
+            $auth = request()->attributes->get('auth');
+            $dosen = \App\Models\DosenModel::where('user_id', $auth->id)->first();
+            
+            return response()->json([
+                'auth_id' => $auth->id ?? 'NULL',
+                'dosen_exists' => $dosen ? 'YES' : 'NO',
+                'dosen_data' => $dosen
+            ]);
+        })->middleware('check.auth');
+
+    }); 
+});

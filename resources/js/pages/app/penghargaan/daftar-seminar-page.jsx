@@ -137,9 +137,17 @@ export default function DaftarSeminarPage() {
 
                     {/* Right side: Tambahkan button */}
                     <Button
-                        onClick={() =>
-                            router.visit(route("penghargaan.seminar.pilih"))
-                        }
+                        onClick={() => {
+                            console.log(
+                                "Navigating to:",
+                                route("penghargaan.seminar.pilih")
+                            );
+                            router.visit(route("penghargaan.seminar.pilih"), {
+                                onError: (errors) => {
+                                    console.error("Navigation error:", errors);
+                                },
+                            });
+                        }}
                     >
                         Tambahkan
                     </Button>
