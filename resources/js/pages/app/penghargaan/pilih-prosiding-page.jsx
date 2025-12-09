@@ -1,6 +1,6 @@
 import AppLayout from "@/layouts/app-layout";
 import { router, usePage } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,21 +13,35 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { route } from "ziggy-js";
+import { toast } from "sonner";
 
 export default function PilihProsidingPage() {
-    const { prosidingList } = usePage().props;
+    const { prosidingList = [], flash } = usePage().props;
     const [selectedProsidingId, setSelectedProsidingId] = useState("");
     const [selectedProsiding, setSelectedProsiding] = useState(null);
 
+    // Handle flash messages
+    useEffect(() => {
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
+
+    // Debug: Log data
+    useEffect(() => {
+        console.log("Prosiding List:", prosidingList);
+    }, [prosidingList]);
+
     const handleProsidingChange = (value) => {
         const prosiding = prosidingList.find((p) => p.id.toString() === value);
+        console.log("Selected Prosiding:", prosiding);
         setSelectedProsidingId(value);
         setSelectedProsiding(prosiding);
     };
 
     const handleNext = () => {
         if (!selectedProsidingId) {
-            alert("Silakan pilih prosiding terlebih dahulu");
+            toast.error("Silakan pilih prosiding terlebih dahulu");
             return;
         }
 
@@ -85,24 +99,42 @@ export default function PilihProsidingPage() {
                         {/* Dropdown Prosiding - Full Width */}
                         <div className="space-y-2">
                             <Label htmlFor="prosiding">Prosiding</Label>
-                            <Select
-                                value={selectedProsidingId}
-                                onValueChange={handleProsidingChange}
-                            >
-                                <SelectTrigger id="prosiding" className="h-12">
-                                    <SelectValue placeholder="" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {prosidingList.map((prosiding) => (
-                                        <SelectItem
-                                            key={prosiding.id}
-                                            value={prosiding.id.toString()}
-                                        >
-                                            {prosiding.judul}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+
+                            {/* ⭐ PERBAIKAN: Tambah fallback UI jika data kosong */}
+                            {prosidingList && prosidingList.length > 0 ? (
+                                <Select
+                                    value={selectedProsidingId}
+                                    onValueChange={handleProsidingChange}
+                                >
+                                    <SelectTrigger
+                                        id="prosiding"
+                                        className="h-12"
+                                    >
+                                        <SelectValue placeholder="-- Pilih Prosiding --" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {prosidingList.map((prosiding) => (
+                                            <SelectItem
+                                                key={prosiding.id}
+                                                value={prosiding.id.toString()}
+                                            >
+                                                {prosiding.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <div className="p-4 border rounded-lg bg-muted text-center">
+                                    <p className="text-sm text-muted-foreground">
+                                        Tidak ada prosiding yang tersedia untuk
+                                        diajukan.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Semua prosiding mungkin sudah diajukan
+                                        atau belum ada data.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Tombol Next - Aligned ke kanan */}

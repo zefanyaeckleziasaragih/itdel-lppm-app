@@ -186,5 +186,29 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
             ]);
         })->middleware('check.auth');
 
+        Route::get('/debug-prosiding', function () {
+            $seminars = DB::table('m_seminar')->get();
+            $penghargaan = DB::table('t_penghargaan_seminar')->get();
+            
+            return response()->json([
+                'seminar_count' => $seminars->count(),
+                'penghargaan_count' => $penghargaan->count(),
+                'seminars' => $seminars,
+                'penghargaan' => $penghargaan
+            ]);
+        })->middleware('check.auth');
+
+        Route::get('/debug-jurnal', function () {
+            $jurnals = DB::table('m_jurnal')->get();
+            $penghargaan = DB::table('t_penghargaan_jurnal')->get();
+            
+            return response()->json([
+                'jurnal_count' => $jurnals->count(),
+                'penghargaan_count' => $penghargaan->count(),
+                'jurnals' => $jurnals,
+                'penghargaan' => $penghargaan
+            ]);
+        })->middleware('check.auth');
+
     }); 
 });

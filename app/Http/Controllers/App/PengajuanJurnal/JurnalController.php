@@ -80,22 +80,30 @@ class JurnalController extends Controller
                 ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
         }
 
-        // Ambil jurnal milik dosen yang BELUM diajukan penghargaan
-        $jurnalList = DB::table('p_jurnal_user as pju')
-            ->join('m_jurnal as j', 'pju.jurnal_id', '=', 'j.id')
+        // ⭐ PERBAIKAN: Ambil semua jurnal yang BELUM diajukan penghargaan
+        $jurnalList = DB::table('m_jurnal as j')
             ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
-            ->where('pju.user_id', $auth->id)
-            ->whereNull('pj.id')
-            ->select('j.id', 'j.judul_paper as judul', 'j.nama_jurnal')
+            ->whereNull('pj.id') // Hanya yang belum ada di tabel penghargaan
+            ->select(
+                'j.id',
+                'j.judul_paper as judul',
+                'j.nama_jurnal',
+                'j.issn',
+                'j.volume',
+                'j.nomor'
+            )
             ->get()
             ->map(function($jurnal) {
                 return [
                     'id' => $jurnal->id,
                     'value' => $jurnal->id,
-                    'label' => $jurnal->judul . ' - ' . $jurnal->nama_jurnal,
+                    'label' => $jurnal->judul . ' - ' . $jurnal->nama_jurnal . ' (ISSN: ' . $jurnal->issn . ')',
                 ];
             })
             ->toArray();
+
+        // Debug: Log jumlah data
+        \Log::info('Jurnal List Count: ' . count($jurnalList));
 
         return Inertia::render('app/PengajuanJurnal/PilihDataPenghargaanPage', [
             'auth' => Inertia::always($auth),

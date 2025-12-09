@@ -1,6 +1,6 @@
 import AppLayout from "@/layouts/app-layout";
 import { usePage, router } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,15 +12,29 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import { route } from "ziggy-js";
 
 export default function PilihDataPenghargaanPage() {
-    const { jurnalList, sinta_id, scopus_id } = usePage().props;
+    const { jurnalList = [], sinta_id, scopus_id, flash } = usePage().props;
 
     const [selectedJurnalId, setSelectedJurnalId] = useState("");
 
+    // Handle flash messages
+    useEffect(() => {
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
+
+    // Debug: Log data
+    useEffect(() => {
+        console.log("Jurnal List:", jurnalList);
+    }, [jurnalList]);
+
     const handleLanjutkan = () => {
         if (!selectedJurnalId) {
-            alert("Silakan pilih jurnal terlebih dahulu");
+            toast.error("Silakan pilih jurnal terlebih dahulu");
             return;
         }
 
@@ -74,34 +88,45 @@ export default function PilihDataPenghargaanPage() {
                         {/* Row 2: Pilih Jurnal dari Database */}
                         <div className="flex flex-col gap-2">
                             <Label>Pilih Jurnal Anda</Label>
-                            <Select
-                                value={selectedJurnalId}
-                                onValueChange={setSelectedJurnalId}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Pilih jurnal yang akan diajukan..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {jurnalList && jurnalList.length > 0 ? (
-                                        jurnalList.map((jurnal) => (
-                                            <SelectItem
-                                                key={jurnal.id}
-                                                value={jurnal.id}
-                                            >
-                                                {jurnal.label}
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <SelectItem value="no-data" disabled>
-                                            Belum ada jurnal tersedia
-                                        </SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                            <p className="text-xs text-muted-foreground">
-                                * Hanya jurnal yang belum pernah diajukan untuk
-                                penghargaan
-                            </p>
+
+                            {/* ⭐ PERBAIKAN: Tambah fallback UI jika data kosong */}
+                            {jurnalList && jurnalList.length > 0 ? (
+                                <>
+                                    <Select
+                                        value={selectedJurnalId}
+                                        onValueChange={setSelectedJurnalId}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="-- Pilih jurnal yang akan diajukan --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {jurnalList.map((jurnal) => (
+                                                <SelectItem
+                                                    key={jurnal.id}
+                                                    value={jurnal.id.toString()}
+                                                >
+                                                    {jurnal.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        * Hanya jurnal yang belum pernah
+                                        diajukan untuk penghargaan
+                                    </p>
+                                </>
+                            ) : (
+                                <div className="p-4 border rounded-lg bg-muted text-center">
+                                    <p className="text-sm text-muted-foreground">
+                                        Tidak ada jurnal yang tersedia untuk
+                                        diajukan.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Semua jurnal mungkin sudah diajukan atau
+                                        belum ada data.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
