@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DosenModel;
 use App\Models\JurnalModel;
 use App\Models\PenghargaanJurnalModel;
+use App\Models\JurnalUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,6 @@ class JurnalController extends Controller
             // Jika bukan dosen, tampilkan list kosong
             $jurnal = [];
         } else {
-            // Ambil jurnal milik dosen ini
             $jurnal = DB::table('p_jurnal_user as pju')
                 ->join('m_jurnal as j', 'pju.jurnal_id', '=', 'j.id')
                 ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
@@ -37,10 +37,10 @@ class JurnalController extends Controller
                     'j.judul_paper as judul',
                     'j.created_at as tanggal',
                     DB::raw("CASE 
-                        WHEN pj.tgl_cair IS NOT NULL THEN 'Sudah Diverifikasi'
-                        WHEN pj.tgl_approve_hrd IS NOT NULL THEN 'Sudah Diverifikasi'
-                        WHEN pj.tgl_verifikasi_lppm IS NOT NULL THEN 'Sudah Diverifikasi'
-                        WHEN pj.id IS NOT NULL THEN 'Belum Diverifikasi'
+                        WHEN pj.tgl_cair IS NOT NULL THEN 'Sudah Dicairkan'
+                        WHEN pj.tgl_approve_hrd IS NOT NULL THEN 'Disetujui HRD'
+                        WHEN pj.tgl_verifikasi_lppm IS NOT NULL THEN 'Diverifikasi LPPM'
+                        WHEN pj.id IS NOT NULL THEN 'Menunggu Verifikasi'
                         ELSE 'Belum Diajukan'
                     END as status")
                 )
@@ -80,10 +80,9 @@ class JurnalController extends Controller
                 ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
         }
 
-        // ⭐ PERBAIKAN: Ambil semua jurnal yang BELUM diajukan penghargaan
         $jurnalList = DB::table('m_jurnal as j')
             ->leftJoin('t_penghargaan_jurnal as pj', 'j.id', '=', 'pj.jurnal_id')
-            ->whereNull('pj.id') // Hanya yang belum ada di tabel penghargaan
+            ->whereNull('pj.id')
             ->select(
                 'j.id',
                 'j.judul_paper as judul',
@@ -193,7 +192,27 @@ class JurnalController extends Controller
                     ->with('error', 'Jurnal ini sudah pernah diajukan untuk penghargaan!');
             }
 
-            // Insert ke tabel t_penghargaan_jurnal
+            $jurnalUserExists = JurnalUserModel::where('jurnal_id', $request->jurnal_id)
+                ->where('user_id', $auth->id)
+                ->exists();
+
+            if (!$jurnalUserExists) {
+                \Log::info('Creating new jurnal_user relation', [
+                    'user_id' => $auth->id,
+                    'jurnal_id' => $request->jurnal_id
+                ]);
+                
+                JurnalUserModel::create([
+                    'id' => ToolsHelper::generateId(),
+                    'user_id' => $auth->id,
+                    'jurnal_id' => $request->jurnal_id,
+                ]);
+            }
+
+            \Log::info('Creating penghargaan_jurnal', [
+                'jurnal_id' => $request->jurnal_id
+            ]);
+            
             PenghargaanJurnalModel::create([
                 'id' => ToolsHelper::generateId(),
                 'jurnal_id' => $request->jurnal_id,
@@ -210,11 +229,16 @@ class JurnalController extends Controller
 
             DB::commit();
 
+            \Log::info('Successfully submitted jurnal penghargaan');
+
             return redirect()->route('pengajuan.jurnal.daftar')
                 ->with('success', 'Pengajuan penghargaan jurnal berhasil diajukan!');
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error storing jurnal penghargaan: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return redirect()->route('pengajuan.jurnal.pilih-data')
                 ->with('error', 'Gagal mengajukan penghargaan jurnal: ' . $e->getMessage());
         }

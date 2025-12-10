@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DosenModel;
 use App\Models\SeminarModel;
 use App\Models\PenghargaanSeminarModel;
+use App\Models\SeminarUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -60,25 +61,10 @@ class PengajuanController extends Controller
     {
         $auth = $request->attributes->get('auth');
 
-        // Dummy data - nanti ganti dengan query real
-        $pengajuan = [
-            'id' => $id,
-            'nama_dosen' => 'Dr. John Doe',
-            'nip' => '123456789',
-            'nik' => '987654321',
-            'jenis_penghargaan' => 'Publikasi Jurnal',
-            'nama_kegiatan' => 'Penelitian Machine Learning',
-            'indeks' => 'Sinta 2',
-            'dana_maksimum' => 5000000,
-            'status' => 'Menunggu',
-            'bukti_url' => '#',
-            'dana_disetujui' => 0,
-        ];
 
         return Inertia::render('app/penghargaan/detail-pengajuan-jurnal-page', [
             'auth' => Inertia::always($auth),
             'pageName' => Inertia::always('Detail Pengajuan'),
-            'pengajuan' => $pengajuan,
         ]);
     }
 
@@ -92,8 +78,6 @@ class PengajuanController extends Controller
             'dana_disetujui' => 'nullable|integer',
         ]);
 
-        // TODO: Update status di database
-        
         return redirect()->route('penghargaan.daftar')
             ->with('success', 'Status pengajuan berhasil diperbarui');
     }
@@ -112,7 +96,6 @@ class PengajuanController extends Controller
             // Jika bukan dosen, tampilkan halaman kosong atau redirect
             $seminarList = [];
         } else {
-            // Ambil seminar milik dosen ini dengan penghargaan
             $seminarList = DB::table('p_seminar_user as psu')
                 ->join('m_seminar as s', 'psu.seminar_id', '=', 's.id')
                 ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
@@ -166,10 +149,9 @@ class PengajuanController extends Controller
                 ->with('error', 'Data dosen tidak ditemukan. Silakan hubungi admin.');
         }
 
-        // ⭐ PERBAIKAN: Ambil semua seminar yang BELUM diajukan penghargaan
         $prosidingList = DB::table('m_seminar as s')
             ->leftJoin('t_penghargaan_seminar as ps', 's.id', '=', 'ps.seminar_id')
-            ->whereNull('ps.id') // Hanya yang belum ada di tabel penghargaan
+            ->whereNull('ps.id')
             ->select(
                 's.id',
                 's.nama_forum as judul',
@@ -277,7 +259,27 @@ class PengajuanController extends Controller
                     ->with('error', 'Seminar ini sudah pernah diajukan untuk penghargaan!');
             }
 
-            // Insert ke tabel t_penghargaan_seminar
+            $seminarUserExists = SeminarUserModel::where('seminar_id', $request->prosiding_id)
+                ->where('user_id', $auth->id)
+                ->exists();
+
+            if (!$seminarUserExists) {
+                \Log::info('Creating new seminar_user relation', [
+                    'user_id' => $auth->id,
+                    'seminar_id' => $request->prosiding_id
+                ]);
+                
+                SeminarUserModel::create([
+                    'id' => ToolsHelper::generateId(),
+                    'user_id' => $auth->id,
+                    'seminar_id' => $request->prosiding_id,
+                ]);
+            }
+
+            \Log::info('Creating penghargaan_seminar', [
+                'seminar_id' => $request->prosiding_id
+            ]);
+            
             PenghargaanSeminarModel::create([
                 'id' => ToolsHelper::generateId(),
                 'seminar_id' => $request->prosiding_id,
@@ -294,11 +296,16 @@ class PengajuanController extends Controller
 
             DB::commit();
 
+            \Log::info('Successfully submitted seminar penghargaan');
+
             return redirect()->route('penghargaan.seminar.daftar')
                 ->with('success', 'Pengajuan penghargaan seminar berhasil diajukan!');
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error storing seminar penghargaan: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return redirect()->route('penghargaan.seminar.pilih')
                 ->with('error', 'Gagal mengajukan penghargaan seminar: ' . $e->getMessage());
         }
