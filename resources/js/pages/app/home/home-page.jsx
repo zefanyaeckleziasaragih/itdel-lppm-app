@@ -5,12 +5,12 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import AppLayout from "@/layouts/app-layout";
-import { AUTH_TOKEN_KEY } from "@/lib/consts";
+    import { AUTH_TOKEN_KEY } from "@/lib/consts";
 import { usePage } from "@inertiajs/react";
 import { useEffect } from "react";
 import { route } from "ziggy-js";
 
-export default function HomePage() {
+export default function Index() {
     const { auth, appName, authToken } = usePage().props;
 
     useEffect(() => {
@@ -26,7 +26,7 @@ export default function HomePage() {
             <Card className="h-full">
                 <CardHeader>
                     <CardTitle className="text-2xl">
-                        &#128075; Hay, {auth.name}
+                        👋 Hay, {auth.name}
                     </CardTitle>
                     <CardDescription>
                         Selamat datang di aplikasi {appName}.

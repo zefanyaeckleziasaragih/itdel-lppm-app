@@ -64,7 +64,9 @@ export function AppSidebar({
     const [openDropdown, setOpenDropdown] = React.useState<string | null>(null);
 
     const toggleDropdown = (title: string) => {
-        setOpenDropdown((prev) => (prev === title ? null : title));
+        setOpenDropdown((prev: string | null) =>
+            prev === title ? null : title
+        );
     };
 
     return (
@@ -75,20 +77,26 @@ export function AppSidebar({
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild
-                            className="data-[slot=sidebar-menu-button]:p-1.5!"
+                            className="h-10 px-2 rounded-md gap-2"
                         >
-                            <a href="#">
-                                <img
-                                    src="/img/logo/sdi-logo-dark.png"
-                                    alt="ITDel Logo"
-                                    className="w-6 block dark:hidden"
-                                />
-                                <img
-                                    src="/img/logo/sdi-logo-light.png"
-                                    alt="ITDel Logo"
-                                    className="w-6 hidden dark:block"
-                                />
-                                <span>{appName}</span>
+                            <a href="#" className="flex items-center gap-2">
+                                {/* Logo */}
+                                <div className="flex items-center justify-center rounded-md bg-muted/70 p-1.5">
+                                    <img
+                                        src="/img/logo/sdi-logo-dark.png"
+                                        alt="ITDel Logo"
+                                        className="h-5 w-5 block dark:hidden"
+                                    />
+                                    <img
+                                        src="/img/logo/sdi-logo-light.png"
+                                        alt="ITDel Logo"
+                                        className="h-5 w-5 hidden dark:block"
+                                    />
+                                </div>
+                                {/* App name */}
+                                <span className="text-sm font-semibold tracking-tight text-foreground">
+                                    {appName}
+                                </span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -100,12 +108,12 @@ export function AppSidebar({
                 <SidebarGroup className="group-data-[collapsible=icon]:hidden">
                     <div className="mb-1">
                         {navData.map((navGroup: NavGroup) => (
-                            <div className="mb-2" key={`nav-${navGroup.title}`}>
-                                <SidebarGroupLabel>
+                            <div className="mb-3" key={`nav-${navGroup.title}`}>
+                                <SidebarGroupLabel className="px-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80">
                                     {navGroup.title}
                                 </SidebarGroupLabel>
 
-                                <SidebarMenu>
+                                <SidebarMenu className="mt-1 space-y-0.5">
                                     {navGroup.items.map((item: NavItem) => (
                                         <SidebarMenuItem key={item.title}>
                                             {/* Jika item punya submenu */}
@@ -113,12 +121,10 @@ export function AppSidebar({
                                                 <>
                                                     <SidebarMenuButton
                                                         className={cn(
-                                                            "hover:bg-primary/5 hover:text-primary flex justify-between",
+                                                            "flex h-9 items-center justify-between rounded-md px-2 text-sm text-muted-foreground transition-colors",
+                                                            "hover:bg-accent hover:text-accent-foreground",
                                                             {
-                                                                "bg-primary/5":
-                                                                    openDropdown ===
-                                                                    item.title,
-                                                                "text-primary":
+                                                                "bg-accent text-accent-foreground":
                                                                     openDropdown ===
                                                                     item.title,
                                                             }
@@ -130,23 +136,23 @@ export function AppSidebar({
                                                         }
                                                     >
                                                         <div className="flex items-center gap-2">
-                                                            <item.icon />
-                                                            <span>
+                                                            <item.icon className="h-4 w-4" />
+                                                            <span className="truncate">
                                                                 {item.title}
                                                             </span>
                                                         </div>
-                                                        <span>
+                                                        <span className="text-[11px] text-muted-foreground">
                                                             {openDropdown ===
                                                             item.title
-                                                                ? "v"
-                                                                : ">"}
+                                                                ? "▾"
+                                                                : "▸"}
                                                         </span>
                                                     </SidebarMenuButton>
 
                                                     {/* SUBMENU */}
                                                     {openDropdown ===
                                                         item.title && (
-                                                        <div className="ml-6 mt-1 border-l pl-3 space-y-1">
+                                                        <div className="mt-1 space-y-0.5 border-l border-border/60 pl-3">
                                                             {item.items.map(
                                                                 (
                                                                     sub: NavSubItem
@@ -159,20 +165,21 @@ export function AppSidebar({
                                                                             sub.title
                                                                         }
                                                                         className={cn(
-                                                                            "block py-1 text-sm hover:text-primary hover:bg-primary/5 rounded-md px-2",
+                                                                            "flex h-8 items-center gap-2 rounded-md px-2 text-xs text-muted-foreground transition-colors",
+                                                                            "hover:bg-accent/70 hover:text-accent-foreground",
                                                                             {
-                                                                                "bg-primary/5 text-primary":
+                                                                                "bg-accent text-accent-foreground":
                                                                                     active ===
                                                                                     sub.title,
                                                                             }
                                                                         )}
                                                                     >
-                                                                        <div className="flex items-center gap-2">
-                                                                            <sub.icon />
+                                                                        <sub.icon className="h-3.5 w-3.5" />
+                                                                        <span className="truncate">
                                                                             {
                                                                                 sub.title
                                                                             }
-                                                                        </div>
+                                                                        </span>
                                                                     </a>
                                                                 )
                                                             )}
@@ -184,25 +191,22 @@ export function AppSidebar({
                                                 <SidebarMenuButton
                                                     asChild
                                                     className={cn(
-                                                        "hover:bg-primary/5 hover:text-primary",
+                                                        "flex h-9 items-center rounded-md px-2 text-sm text-muted-foreground transition-colors",
+                                                        "hover:bg-accent hover:text-accent-foreground",
                                                         {
-                                                            "bg-primary/5":
-                                                                active ===
-                                                                item.title,
-                                                            "text-primary":
-                                                                active ===
-                                                                item.title,
-                                                            "border-l border-primary":
+                                                            "bg-accent text-accent-foreground":
                                                                 active ===
                                                                 item.title,
                                                         }
                                                     )}
                                                 >
                                                     <a href={item.url}>
-                                                        <item.icon />
-                                                        <span>
-                                                            {item.title}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <item.icon className="h-4 w-4" />
+                                                            <span className="truncate">
+                                                                {item.title}
+                                                            </span>
+                                                        </div>
                                                     </a>
                                                 </SidebarMenuButton>
                                             )}

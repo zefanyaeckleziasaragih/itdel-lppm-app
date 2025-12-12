@@ -2,27 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Penghargaan extends Model
 {
-    use HasFactory;
+    // Kita pakai VIEW gabungan
+    protected $table = 'v_penghargaan_semua';
+
+    // id kamu berupa UUID → non increment
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    // VIEW biasanya tidak punya updated_at/created_at Laravel
+    public $timestamps = false;
 
     protected $fillable = [
-        'nama',
-        'tanggal',
-        'status',
+        'id',
+        'jenis',        // 'jurnal' / 'seminar'
+        'ref_id',       // jurnal_id / seminar_id
+        'tanggal',      // tanggal_diajukan
+        'status',       // status_pengajuan/status_hrd
+        'created_at',
     ];
-
-    // Menambahkan fungsi untuk mendapatkan total dana approve atau sisa dana jika diperlukan
-    public function getTotalDanaApprove()
-    {
-        return $this->where('status', 'approved')->sum('dana');
-    }
-
-    public function getSisaDana()
-    {
-        return $this->anggaran - $this->getTotalDanaApprove();
-    }
 }

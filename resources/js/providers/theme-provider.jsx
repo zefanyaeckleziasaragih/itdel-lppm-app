@@ -57,6 +57,24 @@ export function ThemeProvider({ children }) {
         setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
     };
 
+    // Expose toggleTheme to global scope so legacy inline `onclick="toggleTheme()"`
+    // handlers or non-React parts can call it without throwing a ReferenceError.
+    // Prefer using React `onClick={toggleTheme}` instead of relying on globals.
+    useEffect(() => {
+        try {
+            window.toggleTheme = toggleTheme;
+        } catch (e) {
+            // ignore (e.g., during SSR or testing)
+        }
+
+        return () => {
+            try {
+                if (window.toggleTheme === toggleTheme)
+                    delete window.toggleTheme;
+            } catch (e) {}
+        };
+    }, [toggleTheme]);
+
     const value = {
         theme,
         colorTheme,

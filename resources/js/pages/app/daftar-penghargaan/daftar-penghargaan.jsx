@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { usePage, Link } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import AppLayout from "@/layouts/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import { AUTH_TOKEN_KEY } from "@/lib/consts";
 import { Award } from "lucide-react";
 
 export default function DaftarPenghargaanPage() {
-    const { auth, authToken, penghargaanList = [] } = usePage().props;
+    const { authToken, penghargaanList = [] } = usePage().props;
     const [searchQuery, setSearchQuery] = useState("");
     const [searchBy, setSearchBy] = useState("all");
     const [sortBy, setSortBy] = useState("newest");
@@ -79,7 +79,7 @@ export default function DaftarPenghargaanPage() {
                 </div>
 
                 {/* List Items */}
-                <div className="space-y-3">
+                <div>
                     {penghargaanList && penghargaanList.length > 0 ? (
                         penghargaanList.map((item) => (
                             <Link
@@ -88,6 +88,7 @@ export default function DaftarPenghargaanPage() {
                                     "daftar-penghargaan.detail",
                                     item.id
                                 )}
+                                className="block mb-4" // <= Tambahkan jarak antar card
                             >
                                 <Card className="hover:shadow-md transition-shadow cursor-pointer border">
                                     <CardContent className="p-4">

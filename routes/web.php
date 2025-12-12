@@ -13,13 +13,13 @@ use App\Http\Controllers\App\Todo\TodoController;
 // PENGHARGAAN
 use App\Http\Controllers\App\Penghargaan\StatistikController;
 use App\Http\Controllers\App\Penghargaan\PengajuanController;
-use App\Http\Controllers\App\Penghargaan\DashboardHrdController;
+use App\Http\Controllers\App\HRD\DashboardHrdController;
 
 // PENGAJUAN JURNAL
 use App\Http\Controllers\App\PengajuanJurnal\JurnalController;
 
-// DAFTAR PENGHARGAAN (Admin)
-use App\Http\Controllers\App\DaftarPenghargaan\DaftarPenghargaanController;
+// DAFTAR PENGHARGAAN (Admin / HRD)
+use App\Http\Controllers\App\HRD\DaftarPenghargaanController;
 
 Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
@@ -35,16 +35,22 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
     // Authentication Routes
     // =======================
     Route::prefix('auth')->group(function () {
+
         Route::get('/login', [AuthController::class, 'login'])
             ->name('auth.login');
+
         Route::post('/login-check', [AuthController::class, 'postLoginCheck'])
             ->name('auth.login-check');
+
         Route::post('/login-post', [AuthController::class, 'postLogin'])
             ->name('auth.login-post');
+
         Route::get('/logout', [AuthController::class, 'logout'])
             ->name('auth.logout');
+
         Route::get('/totp', [AuthController::class, 'totp'])
             ->name('auth.totp');
+
         Route::post('/totp-post', [AuthController::class, 'postTotp'])
             ->name('auth.totp-post');
     });
@@ -64,10 +70,13 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         Route::prefix('hak-akses')->group(function () {
             Route::get('/', [HakAksesController::class, 'index'])
                 ->name('hak-akses');
+
             Route::post('/change', [HakAksesController::class, 'postChange'])
                 ->name('hak-akses.change-post');
+
             Route::post('/delete', [HakAksesController::class, 'postDelete'])
                 ->name('hak-akses.delete-post');
+
             Route::post('/delete-selected', [HakAksesController::class, 'postDeleteSelected'])
                 ->name('hak-akses.delete-selected-post');
         });
@@ -78,8 +87,10 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
         Route::prefix('todo')->group(function () {
             Route::get('/', [TodoController::class, 'index'])
                 ->name('todo');
+
             Route::post('/change', [TodoController::class, 'postChange'])
                 ->name('todo.change-post');
+
             Route::post('/delete', [TodoController::class, 'postDelete'])
                 ->name('todo.delete-post');
         });
@@ -97,19 +108,19 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
             Route::get('/statistik', [StatistikController::class, 'index'])
                 ->name('penghargaan.statistik');
 
-            // ---------- Daftar dosen pengajuan penghargaan ----------
-            Route::get('/daftar', [PengajuanController::class, 'daftarPengajuan'])
+            // ---------- Daftar dosen pengajuan penghargaan (LPPM view) ----------
+            Route::get('/daftar', [PengajuanController::class, 'index'])
                 ->name('penghargaan.daftar');
 
-            // Detail / Form konfirmasi
-            Route::get('/daftar/{id}', [PengajuanController::class, 'detailPengajuan'])
+            // Detail / Form konfirmasi (LPPM)
+            Route::get('/daftar/{id}', [PengajuanController::class, 'show'])
                 ->name('penghargaan.detail');
 
-            // Simpan konfirmasi (pencairan / status)
+            // Simpan konfirmasi (status & dana – LPPM)
             Route::post('/daftar/{id}/konfirmasi', [PengajuanController::class, 'konfirmasi'])
                 ->name('penghargaan.konfirmasi');
 
-            // ---------- PENGHARGAAN SEMINAR ----------
+            // ---------- SEMINAR (DOSEN) ----------
             // Daftar Seminar yang sudah diajukan
             Route::get('/seminar/daftar', [PengajuanController::class, 'daftarSeminar'])
                 ->name('penghargaan.seminar.daftar');
@@ -119,96 +130,67 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
                 ->name('penghargaan.seminar.pilih');
 
             // Form Pengajuan Seminar (Step 2)
-            Route::get('/seminar/form', [PengajuanController::class, 'formSeminar'])
+            Route::get('/seminar', [PengajuanController::class, 'formSeminar'])
                 ->name('penghargaan.seminar');
 
             // Simpan Pengajuan Seminar
-            Route::post('/seminar/store', [PengajuanController::class, 'storeSeminar'])
+            Route::post('/seminar', [PengajuanController::class, 'storeSeminar'])
                 ->name('penghargaan.seminar.store');
+
+            // (Opsional) alias route seperti di branch temanmu:
+            Route::get('/seminar/form', [PengajuanController::class, 'formSeminar'])
+                ->name('penghargaan.seminar.form-alt');
+
+            Route::post('/seminar/store', [PengajuanController::class, 'storeSeminar'])
+                ->name('penghargaan.seminar.store-alt');
         });
 
         // =======================
         // ⭐ Pengajuan Jurnal
         // =======================
         Route::prefix('pengajuan-jurnal')->name('pengajuan.jurnal.')->group(function () {
+
+            // Halaman Daftar Jurnal
             Route::get('/', [JurnalController::class, 'index'])
                 ->name('daftar');
 
+            // Halaman Pilih Data
             Route::get('/pilih-data', [JurnalController::class, 'pilihData'])
                 ->name('pilih-data');
 
+            // Halaman Form Penghargaan
             Route::get('/form', [JurnalController::class, 'form'])
                 ->name('form');
 
+            // Submit Form
             Route::post('/store', [JurnalController::class, 'store'])
                 ->name('store');
+
+            // (opsional, kalau di branch-mu ada)
+            Route::get('/edit/{id}', [JurnalController::class, 'edit'])
+                ->name('edit');
+
+            Route::put('/update/{id}', [JurnalController::class, 'update'])
+                ->name('update');
+
+            Route::delete('/delete/{id}', [JurnalController::class, 'delete'])
+                ->name('delete');
         });
 
         // =======================
-        // DAFTAR PENGHARGAAN (Admin)
+        // DAFTAR PENGHARGAAN (ADMIN / HRD)
         // =======================
         Route::prefix('daftar-penghargaan')->group(function () {
+
             Route::get('/', [DaftarPenghargaanController::class, 'index'])
                 ->name('daftar-penghargaan');
 
             Route::get('/{id}', [DaftarPenghargaanController::class, 'show'])
                 ->name('daftar-penghargaan.detail');
+
+            // Aksi HRD: tandai dana sudah dicairkan
+            Route::post('/{id}/cairkan', [DaftarPenghargaanController::class, 'cairkanDana'])
+                ->name('daftar-penghargaan.cairkan');
         });
-
-        Route::get('/test-db', function () {
-            try {
-                $dosens = DB::table('m_dosen')->get();
-                $jurnals = DB::table('m_jurnal')->get();
-                
-                return response()->json([
-                    'status' => 'success',
-                    'dosen_count' => $dosens->count(),
-                    'jurnal_count' => $jurnals->count(),
-                    'sample_dosen' => $dosens->first(),
-                    'sample_jurnal' => $jurnals->first()
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => $e->getMessage()
-                ]);
-            }
-        });
-
-        Route::get('/debug-user', function() {
-            $auth = request()->attributes->get('auth');
-            $dosen = \App\Models\DosenModel::where('user_id', $auth->id)->first();
-            
-            return response()->json([
-                'auth_id' => $auth->id ?? 'NULL',
-                'dosen_exists' => $dosen ? 'YES' : 'NO',
-                'dosen_data' => $dosen
-            ]);
-        })->middleware('check.auth');
-
-        Route::get('/debug-prosiding', function () {
-            $seminars = DB::table('m_seminar')->get();
-            $penghargaan = DB::table('t_penghargaan_seminar')->get();
-            
-            return response()->json([
-                'seminar_count' => $seminars->count(),
-                'penghargaan_count' => $penghargaan->count(),
-                'seminars' => $seminars,
-                'penghargaan' => $penghargaan
-            ]);
-        })->middleware('check.auth');
-
-        Route::get('/debug-jurnal', function () {
-            $jurnals = DB::table('m_jurnal')->get();
-            $penghargaan = DB::table('t_penghargaan_jurnal')->get();
-            
-            return response()->json([
-                'jurnal_count' => $jurnals->count(),
-                'penghargaan_count' => $penghargaan->count(),
-                'jurnals' => $jurnals,
-                'penghargaan' => $penghargaan
-            ]);
-        })->middleware('check.auth');
-
-    }); 
-});
+    }); // end middleware check.auth
+}); // end middleware throttle + inertia

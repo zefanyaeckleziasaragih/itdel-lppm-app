@@ -1,13 +1,15 @@
 import { useEffect } from "react";
-import { usePage } from "@inertiajs/react";
+import { usePage, router } from "@inertiajs/react";
 import { route } from "ziggy-js";
+import Swal from "sweetalert2";
+
 import AppLayout from "@/layouts/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AUTH_TOKEN_KEY } from "@/lib/consts";
 
 export default function DetailPenghargaanPage() {
-    const { auth, authToken, penghargaan } = usePage().props;
+    const { authToken, penghargaan } = usePage().props;
 
     useEffect(() => {
         if (authToken) {
@@ -15,7 +17,71 @@ export default function DetailPenghargaanPage() {
         } else {
             window.location.href = route("auth.logout");
         }
-    }, []);
+    }, [authToken]);
+
+    const statusSudah = penghargaan.status === "Sudah dicairkan";
+
+    const handleDanaDicairkan = () => {
+        if (statusSudah) return;
+
+        Swal.fire({
+            title: "Konfirmasi Pencairan Dana",
+            text: "Dana untuk penghargaan ini akan ditandai sebagai sudah dicairkan. Yakin ingin melanjutkan?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ya, cairkan",
+            cancelButtonText: "Batal",
+            confirmButtonColor: "#16a34a",
+            cancelButtonColor: "#6b7280",
+            background: "#020617",
+            color: "#e5e7eb",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            router.post(
+                `/daftar-penghargaan/${penghargaan.id}/cairkan`,
+                {},
+                {
+                    onStart: () => {
+                        Swal.fire({
+                            title: "Memproses...",
+                            text: "Mohon tunggu sebentar.",
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            background: "#020617",
+                            color: "#e5e7eb",
+                        });
+                    },
+                    onSuccess: () => {
+                        Swal.fire({
+                            title: "Berhasil",
+                            text: "Dana berhasil ditandai sebagai sudah dicairkan.",
+                            icon: "success",
+                            confirmButtonText: "OK",
+                            confirmButtonColor: "#16a34a",
+                            background: "#020617",
+                            color: "#e5e7eb",
+                        });
+                        // setelah success, backend sudah redirect ke daftar-penghargaan
+                    },
+                    onError: () => {
+                        Swal.fire({
+                            title: "Gagal",
+                            text: "Terjadi kesalahan saat memproses pencairan dana.",
+                            icon: "error",
+                            confirmButtonText: "OK",
+                            confirmButtonColor: "#dc2626",
+                            background: "#020617",
+                            color: "#e5e7eb",
+                        });
+                    },
+                }
+            );
+        });
+    };
 
     return (
         <AppLayout>
@@ -33,7 +99,7 @@ export default function DetailPenghargaanPage() {
                 {/* Table Detail */}
                 <Card>
                     <CardContent className="p-0">
-                        <table className="w-full">
+                        <table className="w-full text-sm">
                             <tbody>
                                 <tr className="border-b">
                                     <td className="p-4 bg-muted font-semibold w-1/3">
@@ -61,7 +127,9 @@ export default function DetailPenghargaanPage() {
                                     <td className="p-4 bg-muted font-semibold">
                                         Prodi
                                     </td>
-                                    <td className="p-4">{penghargaan.prodi}</td>
+                                    <td className="p-4">
+                                        {penghargaan.prodi}
+                                    </td>
                                 </tr>
                                 <tr className="border-b">
                                     <td className="p-4 bg-muted font-semibold">
@@ -94,7 +162,7 @@ export default function DetailPenghargaanPage() {
                                     <td className="p-4">
                                         <a
                                             href="#"
-                                            className="text-blue-600 hover:underline"
+                                            className="text-blue-500 hover:underline"
                                         >
                                             {penghargaan.bukti_pengajuan}
                                         </a>
@@ -113,13 +181,15 @@ export default function DetailPenghargaanPage() {
                     </CardContent>
                 </Card>
 
-                {/* Button */}
+                {/* Tombol Aksi */}
                 <div className="flex justify-end">
                     <Button
                         size="lg"
                         className="bg-black hover:bg-gray-800 text-white"
+                        onClick={handleDanaDicairkan}
+                        disabled={statusSudah}
                     >
-                        Dana Dicairkan
+                        {statusSudah ? "Dana Sudah Dicairkan" : "Dana Dicairkan"}
                     </Button>
                 </div>
             </div>

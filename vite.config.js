@@ -20,4 +20,12 @@ export default defineConfig({
     optimizeDeps: {
         include: ["lucide-react"],
     },
+    server: {
+        host: "127.0.0.1",  // <--- paksa pakai IPv4, bukan [::]
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: "127.0.0.1",
+        },
+    },
 });

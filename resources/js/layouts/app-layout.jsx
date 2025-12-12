@@ -17,15 +17,16 @@ import {
 } from "@/components/ui/sidebar";
 import { useTheme } from "@/providers/theme-provider";
 
+import { useEffect } from "react";
 import { usePage } from "@inertiajs/react";
 
 import * as Icon from "@tabler/icons-react";
 import { Moon, Sun } from "lucide-react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { route } from "ziggy-js";
 
 export default function AppLayout({ children }) {
-    const { auth, appName, pageName } = usePage().props;
+    const { auth, appName, pageName, flash } = usePage().props;
     const { theme, colorTheme, toggleTheme, setColorTheme } = useTheme();
 
     const colorThemes = [
@@ -38,6 +39,16 @@ export default function AppLayout({ children }) {
         "violet",
         "yellow",
     ];
+
+    // ====== TAMPILKAN FLASH MESSAGE DARI LARAVEL (success / error) ======
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     // =========================
     // ROLE HANDLING
@@ -69,8 +80,6 @@ export default function AppLayout({ children }) {
                 },
             ],
         },
-
-        // ⭐ PENGHARGAAN
         {
             title: "Penghargaan",
             items: [
@@ -96,8 +105,6 @@ export default function AppLayout({ children }) {
                 },
             ],
         },
-
-        // ⭐ PENGAJUAN JURNAL
         {
             title: "Pengajuan Jurnal",
             items: [
@@ -108,8 +115,6 @@ export default function AppLayout({ children }) {
                 },
             ],
         },
-
-        // ⭐ ADMIN
         {
             title: "Admin",
             items: [
@@ -131,7 +136,7 @@ export default function AppLayout({ children }) {
     // ROLE SPESIFIK
     // =========================
 
-    // 0. ADMIN -> Beranda Admin + Bagian Dosen/LPPM/HRD (dropdown) + Admin: Hak Akses
+    // 0. ADMIN
     if (isAdmin) {
         navData = [
             {
@@ -139,7 +144,7 @@ export default function AppLayout({ children }) {
                 items: [
                     {
                         title: "Beranda Admin",
-                        url: route("home"), // ganti ke route dashboard admin kalau ada
+                        url: route("home"),
                         icon: Icon.IconLayoutDashboard,
                     },
                     {
@@ -148,7 +153,6 @@ export default function AppLayout({ children }) {
                         items: [
                             {
                                 title: "Beranda Dosen",
-                                // route ke halaman yang mewakili beranda dosen
                                 url: route("home"),
                                 icon: Icon.IconHome,
                             },
@@ -158,7 +162,7 @@ export default function AppLayout({ children }) {
                                 icon: Icon.IconPresentation,
                             },
                             {
-                                title: "Jurnal", // rename dari "Daftar Jurnal"
+                                title: "Jurnal",
                                 url: route("pengajuan.jurnal.daftar"),
                                 icon: Icon.IconBook,
                             },
@@ -270,7 +274,7 @@ export default function AppLayout({ children }) {
             },
         ];
     }
-    // 3. DOSEN (sudah pas, tetap)
+    // 3. DOSEN
     else if (isDosen) {
         navData = [
             {
@@ -350,10 +354,7 @@ export default function AppLayout({ children }) {
                                     <SelectGroup>
                                         <SelectLabel>Tema</SelectLabel>
                                         {colorThemes.map((item) => (
-                                            <SelectItem
-                                                key={item}
-                                                value={item}
-                                            >
+                                            <SelectItem key={item} value={item}>
                                                 {item}
                                             </SelectItem>
                                         ))}
@@ -386,6 +387,7 @@ export default function AppLayout({ children }) {
                 </SidebarInset>
             </SidebarProvider>
 
+            {/* TOASTER UNTUK NOTIFIKASI */}
             <Toaster richColors position="top-center" />
         </>
     );

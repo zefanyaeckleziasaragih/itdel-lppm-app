@@ -6,25 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        // Jangan bikin tabel lagi kalau sudah ada
-        if (!Schema::hasTable('m_hak_akses')) {
-            Schema::create('m_hak_akses', function (Blueprint $table) {
-                $table->id();
-                $table->timestamps();
-            });
-        }
+        Schema::create('m_hak_akses', function (Blueprint $table) {
+            // Primary key sesuai generateId()
+            $table->uuid('id')->primary();
+
+            // user_id adalah UUID biasa, bukan primary key!
+            $table->uuid('user_id');
+
+            // akses berupa TEXT (list role yang dipisahkan koma)
+            $table->text('akses');
+
+            // timestamps mengikuti Sequelize (created_at & updated_at)
+            $table->timestamp('created_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        
+        Schema::dropIfExists('m_hak_akses');
     }
 };

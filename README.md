@@ -5,6 +5,30 @@ Aplikasi starter untuk kebutuhan pengembangan internal IT Del berbasis **Laravel
 ---
 
 ## 📌 Logs
+### [10-12-2025] 
+- [Glen Rejeki Sitorus] Memperbaiki perhitungan approval rate berdasarkan status_hrd.
+- [Glen Rejeki Sitorus] Memperbaiki total pengajuan (jurnal & seminar) berdasarkan status_pengajuan = disetujui.
+- [Glen Rejeki Sitorus] Memperbaiki rekap jenis bulan ini (jurnal/seminar).
+- [Glen Rejeki Sitorus] Memperbaiki total penghargaan yang sudah dicairkan dari DB.
+- [Glen Rejeki Sitorus] Menambahkan dummy sisaDana = 9.750.000 tanpa mengganggu data lain.
+- [Glen Rejeki Sitorus] Mengatur ulang anggaran agar mengikuti totalDanaApprove + sisaDana.
+- [Glen Rejeki Sitorus] Membersihkan dan merapikan controller DashboardHrdController.
+
+
+
+### [10-12-2025] 
+- [Glen Rejeki Sitorus] Memperbaiki controler HRD detail
+- [Glen Rejeki Sitorus] Memperbaiki tampilan HRD detail dimana tidak statis melainkan dinamis 
+- [Glen Rejeki Sitorus] Memperbaiki web.php supaya dari tampilan detail ke daftar approve 
+- [Glen Rejeki Sitorus] Menggabungkan pekerjaan Zefanya pada fitur dosen dengan modul yang saya kerjakan (Dashboard LPPM, detail LPPM, detail HRD) dan menyelesaikan conflict controller + routing.
+
+
+### [8-12-2025] 
+- [Glen Rejeki Sitorus] Mengganti seluruh dummy data statistik dengan query nyata dari tabel penghargaan jurnal & seminar.
+- [Glen Rejeki Sitorus] Menambahkan perhitungan Total Penghargaan Bulan Ini, Total Dana Approve, dan Sisa Dana berdasarkan data DB.
+- [Glen Rejeki Sitorus]Menyelaraskan grafik (line chart) agar menggunakan data jurnal & seminar yang diperbarui.
+- [Glen Rejeki Sitorus]Membersihkan kode lama yang tidak relevan dan menyesuaikan struktur response Inertia.
+
 
 ### [1-12-2025] 
 - [Glen Rejeki Sitorus] Memeperbaiki tampilan sidebar untuk dosen 
@@ -27,8 +51,8 @@ Aplikasi starter untuk kebutuhan pengembangan internal IT Del berbasis **Laravel
 
 ### [25-11-2025]
 - [Glen Rejeki Sitorus] Menggabungkan tampilan HRD, pengajuan penghargaan seminar (Zefanya), dan pengajuan penghargaan jurnal (Lofelyn)
-- Sinkronisasi route, sidebar, controller, dan konfigurasi Ziggy
-- Penyelesaian konflik pada beberapa file utama
+- [Glen Rejeki Sitorus] Sinkronisasi route, sidebar, controller, dan konfigurasi Ziggy
+- [Glen Rejeki Sitorus] Penyelesaian konflik pada beberapa file utama
 
 
 ### [24-11-2025]
