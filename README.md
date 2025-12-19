@@ -5,6 +5,12 @@ Aplikasi starter untuk kebutuhan pengembangan internal IT Del berbasis **Laravel
 ---
 
 ## 📌 Logs
+### [17-12-2025] 
+- [Glen Rejeki Sitorus] Rapikan PengajuanController: hapus duplikasi field/select, pakai fromSub(union) untuk sorting union, konsisten label jenis & indeks.
+- [Glen Rejeki Sitorus] Tambah/rapikan flow pengajuan jurnal dosen (daftar/pilih/form/store) dan pastikan insert tanpa kolom status (pakai status_pengajuan = pengajuan_baru).
+- [Glen Rejeki Sitorus] Fix query jurnal agar pakai pivot p_jurnal_user (hindari error kolom j.user_id).
+- [Glen Rejeki Sitorus] Perbaiki HakAksesPage.jsx: default props aman, handle user null, filter & render lebih robust.
+
 ### [10-12-2025] 
 - [Glen Rejeki Sitorus] Memperbaiki perhitungan approval rate berdasarkan status_hrd.
 - [Glen Rejeki Sitorus] Memperbaiki total pengajuan (jurnal & seminar) berdasarkan status_pengajuan = disetujui.

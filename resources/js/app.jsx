@@ -8,21 +8,33 @@ import { Ziggy } from "./ziggy.js";
 
 createInertiaApp({
     resolve: (name) => {
-        // Load semua file page di dua folder:
-        const pages = import.meta.glob(
-            [
-                "./pages/**/*.jsx",      // folder default
-                "./pages/app/**/*.jsx",  // folder app yang kamu pakai
-            ],
-            { eager: true }
-        );
+        const pages = import.meta.glob("./Pages/**/*.jsx", { eager: true });
 
-        // Pencarian dengan prioritas folder `app/`
-        return (
-            pages[`./pages/app/${name}.jsx`] ??
-            pages[`./pages/${name}.jsx`] ??
-            null
-        );
+        // Try exact match first (case-sensitive)
+        let pagePath = `./Pages/${name}.jsx`;
+
+        if (!pages[pagePath]) {
+            // Try with first segment capitalized
+            const normalizedName = name
+                .split("/")
+                .map((part, index) =>
+                    index === 0
+                        ? part.charAt(0).toUpperCase() + part.slice(1)
+                        : part
+                )
+                .join("/");
+
+            pagePath = `./Pages/${normalizedName}.jsx`;
+        }
+
+        if (!pages[pagePath]) {
+            console.error("Available pages:", Object.keys(pages));
+            console.error("Looking for:", pagePath);
+            console.error("Original name:", name);
+            throw new Error(`Inertia page not found: ${name}`);
+        }
+
+        return pages[pagePath];
     },
 
     setup({ el, App, props }) {

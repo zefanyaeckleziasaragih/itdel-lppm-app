@@ -42,7 +42,8 @@ import { HakAksesDeleteDialog } from "./dialogs/delete-dialog";
 import { HakAksesDeleteSelectedDialog } from "./dialogs/delete-selected-dialog";
 
 export default function HakAksesPage() {
-    const { aksesList, flash } = usePage().props;
+    const { aksesList = [], flash = {} } = usePage().props;
+
     const [search, setSearch] = React.useState("");
     const [dataAkses, setDataAkses] = React.useState(aksesList);
     const [titleChangeDialog, setTitleChangeDialog] =
@@ -66,44 +67,50 @@ export default function HakAksesPage() {
     const [isDeleteSelectedDialogOpen, setIsDeleteSelectedDialogOpen] =
         React.useState(false);
 
-    // Tampilkan notifikasi jika ada pesan flash
+    // Flash messages
     React.useEffect(() => {
-        if (flash.success) {
+        if (flash?.success) {
             router.reload({ only: ["aksesList"] });
             setIsChangeDialogOpen(false);
             setIsDeleteDialogOpen(false);
             setIsDeleteSelectedDialogOpen(false);
             toast.success(flash.success);
         }
-        if (flash.error) {
+        if (flash?.error) {
             toast.error(flash.error);
         }
     }, [flash]);
 
+    // Search filter (AMAN walau user null)
     React.useEffect(() => {
-        if (search === "") {
+        if (!search) {
             setDataAkses(aksesList);
             return;
         }
 
-        const filteredData = aksesList.filter((item) => {
-            const user = item.user;
-            const searchLower = search.toLowerCase();
+        const searchLower = search.toLowerCase();
+
+        const filteredData = (aksesList ?? []).filter((item) => {
+            const user = item?.user ?? null;
+            const name = (user?.name ?? "").toLowerCase();
+            const username = (user?.username ?? "").toLowerCase();
+
+            const aksesArr = Array.isArray(item?.data_akses)
+                ? item.data_akses
+                : [];
 
             return (
-                user.name.toLowerCase().includes(searchLower) ||
-                user.username.toLowerCase().includes(searchLower) ||
-                item.data_akses.some((akses) =>
-                    akses.toLowerCase().includes(searchLower)
-                )
+                name.includes(searchLower) ||
+                username.includes(searchLower) ||
+                aksesArr.some((a) => (a ?? "").toLowerCase().includes(searchLower))
             );
         });
+
         setDataAkses(filteredData);
     }, [search, aksesList]);
 
-    // Definisi kolom untuk tabel Hak Akses
     const columns = [
-        // Kolom Pilih
+        // Pilih Baris
         {
             id: "Pilih Baris",
             header: ({ table }) => (
@@ -128,7 +135,8 @@ export default function HakAksesPage() {
             enableSorting: false,
             enableHiding: false,
         },
-        // Kolom Identitas
+
+        // Identitas
         {
             id: "Identitas",
             accessorKey: "user",
@@ -151,19 +159,24 @@ export default function HakAksesPage() {
                     )}
                 </Button>
             ),
-            cell: ({ row }) => (
-                <div>
-                    <span className="text-gray-400">
-                        @{row.original.user.username}
-                    </span>
-                    <br />
-                    <span className="font-medium">
-                        {row.original.user.name}
-                    </span>
-                </div>
-            ),
+            cell: ({ row }) => {
+                const user = row?.original?.user ?? null;
+
+                return (
+                    <div>
+                        <span className="text-gray-400">
+                            @{user?.username ?? "-"}
+                        </span>
+                        <br />
+                        <span className="font-medium">
+                            {user?.name ?? "(User tidak ditemukan)"}
+                        </span>
+                    </div>
+                );
+            },
         },
-        // Kolom Akses
+
+        // Hak Akses
         {
             id: "Hak Akses",
             accessorKey: "data_akses",
@@ -186,25 +199,43 @@ export default function HakAksesPage() {
                     )}
                 </Button>
             ),
-            cell: ({ row }) => (
-                <div className="text-left">
-                    {row.original.data_akses.map((akses) => (
-                        <Badge
-                            key={akses}
-                            variant="secondary"
-                            className="mr-1 mb-1"
-                        >
-                            {akses}
-                        </Badge>
-                    ))}
-                </div>
-            ),
+            cell: ({ row }) => {
+                const aksesArr = Array.isArray(row?.original?.data_akses)
+                    ? row.original.data_akses
+                    : [];
+
+                return (
+                    <div className="text-left">
+                        {aksesArr.length ? (
+                            aksesArr.map((akses) => (
+                                <Badge
+                                    key={akses}
+                                    variant="secondary"
+                                    className="mr-1 mb-1"
+                                >
+                                    {akses}
+                                </Badge>
+                            ))
+                        ) : (
+                            <span className="text-muted-foreground text-sm">
+                                -
+                            </span>
+                        )}
+                    </div>
+                );
+            },
         },
-        // Kolom Tindakan
+
+        // Tindakan
         {
             id: "Tindakan",
             header: "Tindakan",
             cell: ({ row }) => {
+                const user = row?.original?.user ?? null;
+                const aksesArr = Array.isArray(row?.original?.data_akses)
+                    ? row.original.data_akses
+                    : [];
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -213,6 +244,7 @@ export default function HakAksesPage() {
                                 <Icon.IconDotsVertical />
                             </Button>
                         </DropdownMenuTrigger>
+
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
                                 className="text-yellow-500"
@@ -220,8 +252,10 @@ export default function HakAksesPage() {
                                     setDataEdit({
                                         id: row.original.id,
                                         userId: row.original.user_id,
-                                        userName: `@${row.original.user.username} - ${row.original.user.name}`,
-                                        hakAkses: row.original.data_akses,
+                                        userName: `@${user?.username ?? "-"} - ${
+                                            user?.name ?? "User tidak ditemukan"
+                                        }`,
+                                        hakAkses: aksesArr,
                                     });
                                     setTitleChangeDialog("Ubah Hak Akses");
                                     setIsChangeDialogOpen(true);
@@ -233,15 +267,17 @@ export default function HakAksesPage() {
                                 />
                                 Ubah
                             </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
+
                             <DropdownMenuItem
                                 className="text-red-500"
                                 onClick={() => {
                                     setDataDelete({
                                         id: row.original.id,
                                         userId: row.original.user_id,
-                                        userName: row.original.user.username,
-                                        hakAkses: row.original.data_akses,
+                                        userName: user?.username ?? "-",
+                                        hakAkses: aksesArr,
                                     });
                                     setIsDeleteDialogOpen(true);
                                 }}
@@ -259,9 +295,8 @@ export default function HakAksesPage() {
         },
     ];
 
-    // Inisialisasi tabel dengan useReactTable
     const table = useReactTable({
-        data: dataAkses,
+        data: dataAkses ?? [],
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -292,7 +327,6 @@ export default function HakAksesPage() {
                         </div>
 
                         <div className="flex items-center space-x-2">
-                            {/* Search Input */}
                             <InputGroup>
                                 <InputGroupInput
                                     placeholder="Cari..."
@@ -304,13 +338,9 @@ export default function HakAksesPage() {
                                 </InputGroupAddon>
                             </InputGroup>
 
-                            {/* Dropdown filter table */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="ml-auto"
-                                    >
+                                    <Button variant="outline" className="ml-auto">
                                         Kolom <ChevronDown />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -325,33 +355,26 @@ export default function HakAksesPage() {
                                         onCheckedChange={(value) => {
                                             table
                                                 .getAllColumns()
-                                                .filter((col) =>
-                                                    col.getCanHide()
-                                                )
+                                                .filter((col) => col.getCanHide())
                                                 .forEach((col) =>
-                                                    col.toggleVisibility(
-                                                        !!value
-                                                    )
+                                                    col.toggleVisibility(!!value)
                                                 );
                                         }}
                                     >
                                         Pilih Semua
                                     </DropdownMenuCheckboxItem>
+
                                     {table
                                         .getAllColumns()
                                         .filter((column) => column.getCanHide())
                                         .map((column) => (
                                             <DropdownMenuCheckboxItem
-                                                onSelect={(e) =>
-                                                    e.preventDefault()
-                                                }
+                                                onSelect={(e) => e.preventDefault()}
                                                 key={`column-toggle-${column.id}`}
                                                 className="capitalize"
                                                 checked={column.getIsVisible()}
                                                 onCheckedChange={(value) =>
-                                                    column.toggleVisibility(
-                                                        !!value
-                                                    )
+                                                    column.toggleVisibility(!!value)
                                                 }
                                             >
                                                 {column.id}
@@ -360,7 +383,6 @@ export default function HakAksesPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            {/* Tombol Tambah */}
                             <Button
                                 variant="outline"
                                 onClick={() => {
@@ -374,46 +396,42 @@ export default function HakAksesPage() {
                         </div>
                     </CardTitle>
                 </CardHeader>
+
                 <CardContent>
-                    {/* Tombol Aksi Ketika Row Dipilih  */}
                     {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                        <>
-                            <div className="text-right mb-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                                    onClick={() => {
-                                        const selectedIds = table
-                                            .getFilteredSelectedRowModel()
-                                            .rows.map(
-                                                (row) => row.original.user_id
-                                            );
-                                        setDataDeleteSelected({
-                                            userIds: selectedIds,
-                                            userNames: table
-                                                .getFilteredSelectedRowModel()
-                                                .rows.map(
-                                                    (row) =>
-                                                        `@${row.original.user.username} - ${row.original.user.name}`
-                                                ),
-                                        });
-                                        setIsDeleteSelectedDialogOpen(true);
-                                    }}
-                                >
-                                    <Icon.IconTrash className="mr-2" />
-                                    Hapus Semua yang Dipilih (
-                                    {
-                                        table.getFilteredSelectedRowModel().rows
-                                            .length
-                                    }
-                                    )
-                                </Button>
-                            </div>
-                        </>
+                        <div className="text-right mb-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                                onClick={() => {
+                                    const selectedRows =
+                                        table.getFilteredSelectedRowModel().rows;
+
+                                    const selectedIds = selectedRows.map(
+                                        (r) => r.original.user_id
+                                    );
+
+                                    setDataDeleteSelected({
+                                        userIds: selectedIds,
+                                        userNames: selectedRows.map((r) => {
+                                            const u = r.original.user;
+                                            return `@${u?.username ?? "-"} - ${
+                                                u?.name ?? "User tidak ditemukan"
+                                            }`;
+                                        }),
+                                    });
+
+                                    setIsDeleteSelectedDialogOpen(true);
+                                }}
+                            >
+                                <Icon.IconTrash className="mr-2" />
+                                Hapus Semua yang Dipilih (
+                                {table.getFilteredSelectedRowModel().rows.length})
+                            </Button>
+                        </div>
                     )}
 
-                    {/* Table */}
                     <div className="overflow-hidden rounded-md border">
                         <Table>
                             <TableHeader className="bg-primary">
@@ -427,8 +445,7 @@ export default function HakAksesPage() {
                                                 {header.isPlaceholder
                                                     ? null
                                                     : flexRender(
-                                                          header.column
-                                                              .columnDef.header,
+                                                          header.column.columnDef.header,
                                                           header.getContext()
                                                       )}
                                             </TableHead>
@@ -436,27 +453,22 @@ export default function HakAksesPage() {
                                     </TableRow>
                                 ))}
                             </TableHeader>
+
                             <TableBody>
                                 {table.getRowModel().rows?.length ? (
                                     table.getRowModel().rows.map((row) => (
                                         <TableRow
                                             key={row.id}
-                                            data-state={
-                                                row.getIsSelected() &&
-                                                "selected"
-                                            }
+                                            data-state={row.getIsSelected() && "selected"}
                                         >
-                                            {row
-                                                .getVisibleCells()
-                                                .map((cell) => (
-                                                    <TableCell key={cell.id}>
-                                                        {flexRender(
-                                                            cell.column
-                                                                .columnDef.cell,
-                                                            cell.getContext()
-                                                        )}
-                                                    </TableCell>
-                                                ))}
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell key={cell.id}>
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext()
+                                                    )}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
                                     ))
                                 ) : (
@@ -475,16 +487,13 @@ export default function HakAksesPage() {
 
                     <div className="flex items-center justify-end space-x-2 py-4">
                         <div className="text-muted-foreground flex-1 text-sm">
-                            Memilih{" "}
-                            {table.getFilteredSelectedRowModel().rows.length}{" "}
-                            dari {table.getFilteredRowModel().rows.length} data
-                            yang tersedia.
+                            Memilih {table.getFilteredSelectedRowModel().rows.length} dari{" "}
+                            {table.getFilteredRowModel().rows.length} data yang tersedia.
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Dialog Change */}
             <HakAksesChangeDialog
                 dataEdit={dataEdit}
                 dialogTitle={titleChangeDialog}
@@ -492,14 +501,12 @@ export default function HakAksesPage() {
                 setOpenDialog={setIsChangeDialogOpen}
             />
 
-            {/* Dialog Delete */}
             <HakAksesDeleteDialog
                 dataDelete={dataDelete}
                 openDialog={isDeleteDialogOpen}
                 setOpenDialog={setIsDeleteDialogOpen}
             />
 
-            {/* Dialog Delete Selected */}
             <HakAksesDeleteSelectedDialog
                 dataDelete={dataDeleteSelected}
                 openDialog={isDeleteSelectedDialogOpen}

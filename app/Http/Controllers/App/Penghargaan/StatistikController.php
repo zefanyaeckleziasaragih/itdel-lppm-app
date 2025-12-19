@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\App\Penghargaan;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Request;
-use App\Models\PenghargaanLppmKelompok5\PenghargaanJurnal;
-use App\Models\PenghargaanLppmKelompok5\PenghargaanSeminar;
 
 class StatistikController extends Controller
 {
@@ -15,9 +12,10 @@ class StatistikController extends Controller
     {
         $auth = $request->attributes->get('auth');
 
-        // =====================================================
-        // 0. DATA REFERENSI (kampus, fakultas, prodi) – tetap dummy
-        // =====================================================
+        // ==========================
+        // DUMMY DATA REFERENSI
+        // (kampus, fakultas, prodi)
+        // ==========================
         $kampus = [
             ['id' => 1, 'nama' => 'IT Del'],
         ];
@@ -39,122 +37,100 @@ class StatistikController extends Controller
             ['id' => 7, 'fakultas_id' => 4, 'nama' => 'Bioproses'],
         ];
 
-        // =====================================================
-        // 1. STATISTIK GRAFIK – jumlah yang DISETUJUI per bulan
-        // =====================================================
+        // ==========================
+        // DUMMY DATA STATISTIK
+        // setiap baris = data per bulan & prodi
+        // (nanti boleh diganti query dari tabel pengajuan)
+        // ==========================
+        $statistik = [
+            [
+                'bulan'    => 'Mei',
+                'jurnal'   => 4,
+                'seminar'  => 2,
+                'buku'     => 1,
+                'fakultas' => 'Fakultas Informatika dan Teknik Elektro',
+                'prodi'    => 'Informatika',
+            ],
+            [
+                'bulan'    => 'Mei',
+                'jurnal'   => 2,
+                'seminar'  => 1,
+                'buku'     => 0,
+                'fakultas' => 'Fakultas Teknik Industri',
+                'prodi'    => 'Manajemen Rekayasa',
+            ],
+            [
+                'bulan'    => 'Juni',
+                'jurnal'   => 3,
+                'seminar'  => 4,
+                'buku'     => 1,
+                'fakultas' => 'Fakultas Informatika dan Teknik Elektro',
+                'prodi'    => 'Sistem Informasi',
+            ],
+            [
+                'bulan'    => 'Juni',
+                'jurnal'   => 2,
+                'seminar'  => 2,
+                'buku'     => 1,
+                'fakultas' => 'Fakultas Vokasi',
+                'prodi'    => 'Teknologi Informasi',
+            ],
+            [
+                'bulan'    => 'Juli',
+                'jurnal'   => 1,
+                'seminar'  => 3,
+                'buku'     => 2,
+                'fakultas' => 'Fakultas Teknik Bioproses',
+                'prodi'    => 'Bioproses',
+            ],
+            [
+                'bulan'    => 'Agustus',
+                'jurnal'   => 5,
+                'seminar'  => 2,
+                'buku'     => 1,
+                'fakultas' => 'Fakultas Vokasi',
+                'prodi'    => 'Teknologi Rekayasa Perangkat Lunak',
+            ],
+        ];
 
-        // JURNAL: hitung per bulan, hanya yang disetujui
-        $jurnalRows = PenghargaanJurnal::selectRaw("
-                EXTRACT(MONTH FROM tgl_pengajuan_penghargaan) AS bulan_num,
-                TO_CHAR(tgl_pengajuan_penghargaan, 'Mon') AS bulan_label,
-                COUNT(*) AS total
-            ")
-            ->where('status_pengajuan', 'disetujui')
-            ->groupBy('bulan_num', 'bulan_label')
-            ->get();
+        // ==========================
+        // DUMMY SUMMARY BULAN INI
+        // anggap "bulan ini" = Agustus
+        // ==========================
 
-        // SEMINAR: hitung per bulan, hanya yang disetujui
-        $seminarRows = PenghargaanSeminar::selectRaw("
-                EXTRACT(MONTH FROM tgl_pengajuan_penghargaan) AS bulan_num,
-                TO_CHAR(tgl_pengajuan_penghargaan, 'Mon') AS bulan_label,
-                COUNT(*) AS total
-            ")
-            ->where('status_pengajuan', 'disetujui')
-            ->groupBy('bulan_num', 'bulan_label')
-            ->get();
+        // total semua pengajuan bulan ini (apapun status)
+        $totalPengajuanBulanIni = 20;
 
-        // Gabungkan ke dalam 1 map [bulan_num => data]
-        $bulanData = [];
+        // total pengajuan yang disetujui bulan ini
+        $totalDisetujuiBulanIni = 12;
 
-        foreach ($jurnalRows as $row) {
-            $key = (int) $row->bulan_num;
-            if (!isset($bulanData[$key])) {
-                $bulanData[$key] = [
-                    'bulan'   => $row->bulan_label,
-                    'jurnal'  => 0,
-                    'seminar' => 0,
-                    'buku'    => 0,
-                    'fakultas'=> 'Semua Fakultas',
-                    'prodi'   => 'Semua Prodi',
-                ];
-            }
-            $bulanData[$key]['jurnal'] = (int) $row->total;
-        }
-
-        foreach ($seminarRows as $row) {
-            $key = (int) $row->bulan_num;
-            if (!isset($bulanData[$key])) {
-                $bulanData[$key] = [
-                    'bulan'   => $row->bulan_label,
-                    'jurnal'  => 0,
-                    'seminar' => 0,
-                    'buku'    => 0,
-                    'fakultas'=> 'Semua Fakultas',
-                    'prodi'   => 'Semua Prodi',
-                ];
-            }
-            $bulanData[$key]['seminar'] = (int) $row->total;
-        }
-
-        // Urutkan berdasarkan nomor bulan
-        ksort($bulanData);
-
-        // Ubah ke array biasa untuk dikirim ke React
-        $statistik = array_values($bulanData);
-
-        // =====================================================
-        // 2. SUMMARY – dipakai kartu di sisi kanan
-        //    (tidak dibatasi "bulan sekarang", tapi semua data)
-        // =====================================================
-
-        // TOTAL SEMUA PENGAJUAN (apapun statusnya)
-        $totalPengajuan = PenghargaanJurnal::count()
-                         + PenghargaanSeminar::count();
-
-        // TOTAL YANG DISETUJUI
-        $totalJurnalDisetujui = PenghargaanJurnal::where('status_pengajuan', 'disetujui')->count();
-        $totalSeminarDisetujui = PenghargaanSeminar::where('status_pengajuan', 'disetujui')->count();
-        $totalApprove = $totalJurnalDisetujui + $totalSeminarDisetujui;
-
-        // APPROVAL RATE
-        $approvalRate = $totalPengajuan > 0
-            ? round(($totalApprove / $totalPengajuan) * 100, 1)
+        // hitung approval rate (dalam %)
+        $approvalRate = $totalPengajuanBulanIni > 0
+            ? round(($totalDisetujuiBulanIni / $totalPengajuanBulanIni) * 100, 1)
             : 0;
 
-        // TOTAL DANA APPROVE
-        $totalDanaApprove =
-            (int) PenghargaanJurnal::where('status_pengajuan', 'disetujui')->sum('nominal_disetujui')
-            +
-            (int) PenghargaanSeminar::where('status_pengajuan', 'disetujui')->sum('nominal_disetujui');
+        // dana
+        $totalDanaApprove = 6500000;   // Rp 6.500.000
+        $anggaran         = 10000000;  // Rp 10.000.000
+        $sisaDana         = $anggaran - $totalDanaApprove;
 
-        // ANGGARAN & SISA
-        $anggaran = 10_000_000; // Rp 10.000.000, sementara hardcode
-        $sisaDana = $anggaran - $totalDanaApprove;
-
-        // REKAP JENIS (jumlah yang DISETUJUI per jenis)
+        // rekap jenis (bulan ini) – dummy
         $rekapJenisBulanIni = [
-            'jurnal'  => $totalJurnalDisetujui,
-            'seminar' => $totalSeminarDisetujui,
-            'buku'    => 0,
+            'jurnal'  => 7,
+            'seminar' => 4,
+            'buku'    => 1,
         ];
 
         $summary = [
-            // dipakai di kartu "Total Penghargaan Bulan Ini"
-            'totalBulanIni'          => $totalApprove,
-
-            // total semua pengajuan (untuk teks atas)
-            'totalPengajuanBulanIni' => $totalPengajuan,
-
-            'approvalRateBulanIni'   => $approvalRate,
+            'totalBulanIni'          => $totalDisetujuiBulanIni,   // dipakai kartu "Total Penghargaan Bulan Ini"
+            'totalPengajuanBulanIni' => $totalPengajuanBulanIni,   // semua pengajuan
+            'approvalRateBulanIni'   => $approvalRate,             // %
             'totalDanaApprove'       => $totalDanaApprove,
             'sisaDana'               => $sisaDana,
             'anggaran'               => $anggaran,
             'rekapJenisBulanIni'     => $rekapJenisBulanIni,
         ];
 
-        // =====================================================
-        // 3. KIRIM KE INERTIA
-        // =====================================================
         return Inertia::render('app/penghargaan/statistik-page', [
             'auth'      => Inertia::always($auth),
             'pageName'  => Inertia::always('Statistik Penghargaan'),
